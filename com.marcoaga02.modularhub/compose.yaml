@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: 'postgres:17'
+    container_name: modularhub-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - '5432'
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.6
+    container_name: modularhub-keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+    command: start-dev
+    ports:
+      - '9090:8080'
+    depends_on:
+      - postgres

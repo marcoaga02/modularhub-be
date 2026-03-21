@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: com.marcoaga02.modularhub
+  docker:
+    compose:
+      file: com.marcoaga02.modularhub/compose.yaml
+  jpa:
+    open-in-view: false
