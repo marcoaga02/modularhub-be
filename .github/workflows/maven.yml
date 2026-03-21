@@ -41,7 +41,7 @@ jobs:
               EXTRA="$EXTRA -Pcoveralls"
             fi
             if [ -n "$SONAR_TOKEN" ]; then
-              EXTRA="$EXTRA sonar:sonar
+              EXTRA="$EXTRA sonar:sonar"
             fi
           echo "EXTRA_GOALS=$EXTRA" >> $GITHUB_ENV
 
