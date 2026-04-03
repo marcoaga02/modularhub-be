@@ -194,6 +194,7 @@
                     <configuration>
                         <excludes>
                             <exclude>**/model/*.*</exclude>
+                            <exclude>**/dto/*.*</exclude>
                             <exclude>**/ModularhubApplication.*</exclude>
                         </excludes>
                     </configuration>
@@ -210,11 +211,6 @@
                                 <goal>check</goal>
                             </goals>
                             <configuration>
-                                <excludes>
-                                    <exclude>**/model/*.*</exclude>
-                                    <exclude>**/dto/*.*</exclude>
-                                    <exclude>**/ModularhubApplication.*</exclude>
-                                </excludes>
                                 <rules>
                                     <rule>
                                         <element>PACKAGE</element>
