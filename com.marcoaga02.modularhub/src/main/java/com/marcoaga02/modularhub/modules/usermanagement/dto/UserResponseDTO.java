@@ -1,10 +1,12 @@
 package com.marcoaga02.modularhub.modules.usermanagement.dto;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@EqualsAndHashCode
 public class UserResponseDTO {
 
     private String id;
@@ -21,13 +23,10 @@ public class UserResponseDTO {
 
     private String taxIdNumber;
 
-    // TODO abilitare dopo implementazione keycloak
-//    private String email;
+    private String email;
 
-//    private String username;
+    private Boolean enabled;
 
-//    private GroupResponseDTO groups;
-
-//    private Boolean enabled;
+    // TODO aggiungere altri campi dopo keycloak e anche Audit
 
 }

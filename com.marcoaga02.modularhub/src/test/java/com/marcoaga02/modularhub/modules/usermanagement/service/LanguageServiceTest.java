@@ -1,68 +1,102 @@
 package com.marcoaga02.modularhub.modules.usermanagement.service;
 
-import com.marcoaga02.modularhub.ModularhubApplication;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.LanguageResponseDTO;
+import com.marcoaga02.modularhub.modules.usermanagement.mapper.LanguageMapper;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Language;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
-import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = ModularhubApplication.class)
-@EnableAutoConfiguration
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class LanguageServiceTest {
 
-    @Autowired
-    private LanguageService languageService;
-
-    @Autowired
+    @Mock
     private LanguageRepository languageRepository;
 
-    @Autowired
-    private EntityManager entityManager;
+    @Mock
+    private LanguageMapper languageMapper;
+
+    @InjectMocks
+    private LanguageService languageService;
+
+    private Language language1, language2;
+    private LanguageResponseDTO languageResponseDTO1, languageResponseDTO2;
+
+    @BeforeEach
+    void setUp() {
+        language1 = new Language();
+        language1.setCode("it-IT");
+        language1.setLabel("Italiano");
+        language1.setIsDefault(true);
+
+        languageResponseDTO1 = new LanguageResponseDTO();
+        languageResponseDTO1.setId(language1.getUuid());
+        languageResponseDTO1.setCode("it-IT");
+        languageResponseDTO1.setLabel("Italiano");
+        languageResponseDTO1.setIsDefault(true);
+
+        language2 = new Language();
+        language2.setCode("en-EN");
+        language2.setLabel("English");
+        language2.setIsDefault(false);
+
+        languageResponseDTO2 = new LanguageResponseDTO();
+        languageResponseDTO2.setId(language2.getUuid());
+        languageResponseDTO2.setCode("en-EN");
+        languageResponseDTO2.setLabel("English");
+        languageResponseDTO2.setIsDefault(false);
+    }
 
     @Test
-    void testGetLanguages() {
-        Language italianLang = createLanguage("it-IT", "Italiano", true);
-        Language englishLang = createLanguage("en-US", "English", false);
+    void testGetLanguages_shouldReturnListOfLanguages() {
+        when(languageRepository.findAll()).thenReturn(List.of(language1));
+        when(languageMapper.toDto(language1)).thenReturn(languageResponseDTO1);
 
-        List<LanguageResponseDTO> result = languageService.getLanguages().stream()
-                .sorted(Comparator.comparing(LanguageResponseDTO::getCode))
-                .toList();
+        List<LanguageResponseDTO> result = languageService.getLanguages();
 
-        assertThat(result).hasSize(2);
+        assertThat(result)
+                .hasSize(1)
+                .containsExactly(languageResponseDTO1);
 
-        assertThat(result.getFirst().getId()).isEqualTo(englishLang.getUuid());
-        assertThat(result.getFirst().getCode()).isEqualTo("en-US");
-        assertThat(result.getFirst().getLabel()).isEqualTo("English");
-        assertThat(result.getFirst().getIsDefault()).isFalse();
-
-        assertThat(result.getLast().getId()).isEqualTo(italianLang.getUuid());
-        assertThat(result.getLast().getCode()).isEqualTo("it-IT");
-        assertThat(result.getLast().getLabel()).isEqualTo("Italiano");
-        assertThat(result.getLast().getIsDefault()).isTrue();
+        verify(languageRepository).findAll();
+        verify(languageMapper).toDto(language1);
     }
 
-    private Language createLanguage(String code, String label, boolean isDefault) {
-        Language language = new Language();
-        language.setCode(code);
-        language.setLabel(label);
-        language.setIsDefault(isDefault);
-        languageRepository.save(language);
+    @Test
+    void testGetLanguages_shouldReturnListOfLanguagesWithMultipleLanguages() {
+        when(languageRepository.findAll()).thenReturn(List.of(language1, language2));
+        when(languageMapper.toDto(language1)).thenReturn(languageResponseDTO1);
+        when(languageMapper.toDto(language2)).thenReturn(languageResponseDTO2);
 
-        entityManager.flush();
-        entityManager.clear();
+        List<LanguageResponseDTO> result = languageService.getLanguages();
 
-        return language;
+        assertThat(result)
+                .hasSize(2)
+                .containsExactlyInAnyOrder(languageResponseDTO1, languageResponseDTO2);
+
+        verify(languageRepository).findAll();
+        verify(languageMapper).toDto(language1);
+        verify(languageMapper).toDto(language2);
     }
 
+    @Test
+    void testGetLanguages_whenNoLanguagesArePresent_shouldReturnEmptyList() {
+        when(languageRepository.findAll()).thenReturn(List.of());
+
+        List<LanguageResponseDTO> result = languageService.getLanguages();
+
+        assertThat(result).isEmpty();
+
+        verify(languageRepository).findAll();
+    }
 }

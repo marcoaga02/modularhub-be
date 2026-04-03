@@ -1,5 +1,6 @@
 package com.marcoaga02.modularhub.modules.usermanagement.model;
 
+import com.marcoaga02.modularhub.shared.domain.AuditableEntity;
 import com.marcoaga02.modularhub.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -9,7 +10,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "users")
-public class User extends BaseEntity {
+public class User extends AuditableEntity {
 
     @Column(name = "firstname")
     private String firstname;
@@ -28,8 +29,14 @@ public class User extends BaseEntity {
     @Column(name = "mobile_number")
     private String mobileNumber;
 
-    @Column(name = "tax_id_number")
+    @Column(name = "tax_id_number", unique = true)
     private String taxIdNumber;
+
+    @Column(name = "email", unique = true)
+    private String email;
+
+    @Column(name = "enabled")
+    private Boolean enabled;
 
     @Override
     protected Class<? extends BaseEntity> getEntityClass() {

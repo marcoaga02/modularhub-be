@@ -1,14 +1,11 @@
 package com.marcoaga02.modularhub.modules.usermanagement.controller;
 
-import com.marcoaga02.modularhub.ModularhubApplication;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.LanguageResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.service.LanguageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -18,8 +15,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(classes = ModularhubApplication.class)
-@AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(LanguageController.class)
 class LanguageControllerTest {
 
     @Autowired
@@ -29,7 +25,7 @@ class LanguageControllerTest {
     private LanguageService languageService;
 
     @Test
-    void testGetLanguages() throws Exception {
+    void testGetLanguages_shouldReturnListOfLanguages() throws Exception {
         LanguageResponseDTO languageResponseDto = new LanguageResponseDTO();
         languageResponseDto.setId("uuid");
         languageResponseDto.setCode("it-IT");
