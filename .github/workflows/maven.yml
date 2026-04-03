@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       workdir: com.marcoaga02.modularhub
-      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+      COVERALLS_REPO_TOKEN: ${{ secrets.SONAR_REPO_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     name: Build with Java 21 on Linux
@@ -49,7 +49,7 @@ jobs:
         run: mvn verify -Pjacoco $EXTRA_GOALS
         working-directory: ${{ env.workdir }}
         env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+          COVERALLS_REPO_TOKEN: ${{ secrets.SONAR_REPO_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Generate JUnit Report
