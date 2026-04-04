@@ -222,14 +222,26 @@
                     </dependencies>
                     <configuration>
                         <targetClasses>
-                            <!-- TODO definire classi target-->
+                            <param>com.marcoaga02.modularhub.*</param>
                         </targetClasses>
                         <targetTests>
-                            <!-- TODO definire test target-->
+                            <param>com.marcoaga02.modularhub.*</param>
                         </targetTests>
                         <mutators>
                             <mutator>DEFAULTS</mutator>
                         </mutators>
+                        <excludedClasses>
+                            <param>com.marcoaga02.modularhub.shared.domain.*</param>
+                            <param>com.marcoaga02.modularhub.shared.dto.*</param>
+                            <param>com.marcoaga02.modularhub.shared.constant.*</param>
+                            <param>com.marcoaga02.modularhub.shared.validation.*</param>
+                            <param>com.marcoaga02.modularhub.shared.config.*</param>
+                            <param>com.marcoaga02.modularhub.shared.exceptions.*</param>
+                            <param>com.marcoaga02.modularhub.ModularhubApplication</param>
+                            <param>com.marcoaga02.modularhub.*.model.*</param>
+                            <param>com.marcoaga02.modularhub.*.dto.*</param>
+                            <param>com.marcoaga02.modularhub.*.repository.*</param>
+                        </excludedClasses>
                         <mutationThreshold>80</mutationThreshold>
                     </configuration>
                 </plugin>
