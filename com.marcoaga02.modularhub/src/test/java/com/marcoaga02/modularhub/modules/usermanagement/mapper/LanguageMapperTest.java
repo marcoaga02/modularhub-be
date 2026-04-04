@@ -25,7 +25,7 @@ class LanguageMapperTest {
     private LanguageRepository languageRepository;
 
     @Test
-    void toDtoShouldMapAllFields() {
+    void testToDtoShouldMapAllFields() {
         Language language = new Language();
         language.setCode("it-IT");
         language.setLabel("Italian");
@@ -40,7 +40,12 @@ class LanguageMapperTest {
     }
 
     @Test
-    void fromUuidShouldReturnLanguageWhenUuidExists() {
+    void testToDtoWhenInputIsNullShouldReturnNull() {
+        assertThat(languageMapper.toDto(null)).isNull();
+    }
+
+    @Test
+    void testFromUuidShouldReturnLanguageWhenUuidExists() {
         Language language = new Language();
         when(languageRepository.findByUuid("lang-uuid")).thenReturn(language);
 
@@ -48,14 +53,14 @@ class LanguageMapperTest {
     }
 
     @Test
-    void fromUuidShouldReturnNullWhenUuidIsNull() {
+    void testFromUuidShouldReturnNullWhenUuidIsNull() {
         assertThat(languageMapper.fromUuid(null)).isNull();
 
         verifyNoInteractions(languageRepository);
     }
 
     @Test
-    void fromUuidShouldReturnNullWhenUuidNotFound() {
+    void testFromUuidShouldReturnNullWhenUuidNotFound() {
         when(languageRepository.findByUuid("unknown")).thenReturn(null);
 
         assertThat(languageMapper.fromUuid("unknown")).isNull();

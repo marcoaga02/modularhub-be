@@ -15,6 +15,6 @@ public interface UserMapper {
     UserResponseDTO toDto(User user);
 
     @Mapping(source = "languageId", target = "language")
-    void updateEntity(UserRequestDTO dto, @MappingTarget User user);
+    User updateEntity(UserRequestDTO dto, @MappingTarget User user);
 
 }

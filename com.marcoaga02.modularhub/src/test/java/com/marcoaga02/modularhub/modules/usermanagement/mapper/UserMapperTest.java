@@ -29,7 +29,7 @@ class UserMapperTest {
 
     @Test
     void testToDtoShouldMapAllFields() {
-        Language language = buildLanguage();
+        Language language = buildLanguage("it-IT", "Italian", true);
         User user = buildUser(language);
 
         UserResponseDTO dto = userMapper.toDto(user);
@@ -48,15 +48,22 @@ class UserMapperTest {
     }
 
     @Test
+    void testToDtoWhenInputIsNullShouldReturnNull() {
+        assertThat(userMapper.toDto(null)).isNull();
+    }
+
+    @Test
     void updateEntityShouldUpdateAllFields() {
-        Language language = buildLanguage();
+        Language language = buildLanguage("it-IT", "Italian", true);
         when(languageRepository.findByUuid("lang-uuid")).thenReturn(language);
 
         UserRequestDTO dto = buildUserRequestDTO();
-        User existing = buildUser(buildLanguage());
+        User existing = buildUser(buildLanguage("en-EN", "English", false));
         String originalUuid = existing.getUuid();
 
-        userMapper.updateEntity(dto, existing);
+        User result = userMapper.updateEntity(dto, existing);
+        assertThat(result).isNotNull();
+        assertThat(result).isSameAs(existing);
 
         assertThat(existing.getFirstname()).isEqualTo("new firstname");
         assertThat(existing.getLastname()).isEqualTo("new lastname");
@@ -70,23 +77,48 @@ class UserMapperTest {
     }
 
     @Test
+    void tesUpdateEntityWhenInputDtoIsNullShouldReturnUnmodifiedUser() {
+        when(languageRepository.findByUuid("lang-uuid"))
+                .thenReturn(buildLanguage("it-IT", "Italian", true));
+
+        Language language = buildLanguage("en-EN", "English", false);
+        User existing = buildUser(language);
+        String originalUuid = existing.getUuid();
+
+        User result = userMapper.updateEntity(null, existing);
+        assertThat(result).isNotNull();
+        assertThat(result).isSameAs(existing);
+
+        assertThat(existing.getFirstname()).isEqualTo("firstname");
+        assertThat(existing.getLastname()).isEqualTo("lastname");
+        assertThat(existing.getGender()).isEqualTo(Gender.M);
+        assertThat(existing.getLanguage()).isEqualTo(language);
+        assertThat(existing.getMobileNumber()).isEqualTo("0000");
+        assertThat(existing.getTaxIdNumber()).isEqualTo("USR1");
+        assertThat(existing.getEmail()).isEqualTo("user@email.com");
+        assertThat(existing.getEnabled()).isTrue();
+        assertThat(existing.getUuid()).isEqualTo(originalUuid);
+    }
+
+    @Test
     void updateEntityShouldSetNullLanguageWhenLanguageIdIsNull() {
         UserRequestDTO dto = buildUserRequestDTO();
         dto.setLanguageId(null);
 
-        User existing = buildUser(buildLanguage());
+        User existing = buildUser(buildLanguage("it-IT", "Italian", true));
 
-        userMapper.updateEntity(dto, existing);
+        User result = userMapper.updateEntity(dto, existing);
+        assertThat(result).isSameAs(existing);
 
         assertThat(existing.getLanguage()).isNull();
         verifyNoInteractions(languageRepository);
     }
 
-    private Language buildLanguage() {
+    private Language buildLanguage(String code, String label, Boolean isDefault) {
         Language language = new Language();
-        language.setCode("it-IT");
-        language.setLabel("Italian");
-        language.setIsDefault(true);
+        language.setCode(code);
+        language.setLabel(label);
+        language.setIsDefault(isDefault);
         return language;
     }
 
