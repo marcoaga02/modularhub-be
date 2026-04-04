@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PageResponseEntityTest {
 
     @Test
-    void shouldReturnCorrectHeadersAndBody() {
+    void testFromPageShouldReturnCorrectHeadersAndBody() {
         List<String> content = List.of("a", "b");
         PageRequest pageable = PageRequest.of(2, 10);
         Page<String> page = new PageImpl<>(content, pageable, 50);
@@ -32,7 +32,7 @@ class PageResponseEntityTest {
     }
 
     @Test
-    void shouldReturnEmptyBodyWhenPageIsEmpty() {
+    void testFromPageShouldReturnEmptyBodyWhenPageIsEmpty() {
         Page<String> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
         ResponseEntity<List<String>> response = PageResponseEntity.fromPage(page);

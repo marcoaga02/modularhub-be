@@ -21,9 +21,9 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
@@ -47,7 +47,7 @@ class UserControllerTest {
     }
 
     @Test
-    void getAllUsers_shouldReturnOkWithListAndPaginationHeaders() throws Exception {
+    void testGetAllUsersShouldReturnOkWithListAndPaginationHeaders() throws Exception {
         Page<UserResponseDTO> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
         when(userService.getAllUsers(any(), any())).thenReturn(page);
 
@@ -62,7 +62,7 @@ class UserControllerTest {
     }
 
     @Test
-    void getAllUsers_whenEmptyPage_shouldReturnOkWithEmptyList() throws Exception {
+    void testGetAllUsersWhenEmptyPageShouldReturnOkWithEmptyList() throws Exception {
         when(userService.getAllUsers(any(), any())).thenReturn(Page.empty());
 
         mockMvc.perform(get("/users"))
@@ -71,7 +71,7 @@ class UserControllerTest {
     }
 
     @Test
-    void getUserByUuid_whenUserExists_shouldReturnOk() throws Exception {
+    void testGetUserByUuidWhenUserExistsShouldReturnOk() throws Exception {
         when(userService.getUserByUuid("user-uuid")).thenReturn(dto);
 
         mockMvc.perform(get("/users/user-uuid"))
@@ -80,7 +80,7 @@ class UserControllerTest {
     }
 
     @Test
-    void getUserByUuid_whenUserNotFound_shouldReturn404() throws Exception {
+    void testGetUserByUuidWhenUserNotFoundShouldReturn404() throws Exception {
         when(userService.getUserByUuid("not-existing"))
                 .thenThrow(new NotFoundException("User with uuid 'not-existing' not found"));
 
@@ -89,17 +89,8 @@ class UserControllerTest {
     }
 
     @Test
-    void createUser_shouldReturnCreated() throws Exception {
-        UserRequestDTO request = new UserRequestDTO();
-        request.setFirstname("Mario");
-        request.setLastname("Rossi");
-        request.setGender(Gender.M);
-        request.setLanguageId("lang-uuid");
-        request.setTaxIdNumber("TAXID01");
-        request.setEmail("mario@mock.it");
-        request.setUsername("mario.rossi");
-        request.setPassword("password");
-        request.setEnabled(true);
+    void testCreateUserShouldReturnCreated() throws Exception {
+        UserRequestDTO request = buildCreateRequestDTO();
 
         when(userService.createUser(any())).thenReturn(dto);
 
@@ -111,10 +102,89 @@ class UserControllerTest {
     }
 
     @Test
-    void createUser_whenMissingRequiredFields_shouldReturn400() throws Exception {
+    void testCreateUserWhenMissingRequiredFieldsShouldReturn400() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void testUpdateUserShouldReturnOk() throws Exception {
+        UserRequestDTO request = buildUpdateRequestDTO();
+
+        when(userService.updateUser(eq("user-uuid"), any())).thenReturn(dto);
+
+        mockMvc.perform(put("/users/user-uuid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("user-uuid"));
+    }
+
+    @Test
+    void testUpdateUserWhenUserNotFoundShouldReturn404() throws Exception {
+        UserRequestDTO request = buildUpdateRequestDTO();
+
+        when(userService.updateUser(eq("not-existing"), any()))
+                .thenThrow(new NotFoundException("User with uuid 'not-existing' not found"));
+
+        mockMvc.perform(put("/users/not-existing")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testUpdateUserWhenMissingRequiredFieldsShouldReturn400() throws Exception {
+        mockMvc.perform(put("/users/user-uuid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deleteUserShouldReturnNoContent() throws Exception {
+        mockMvc.perform(delete("/users/user-uuid"))
+                .andExpect(status().isNoContent());
+
+        verify(userService).deleteUser("user-uuid");
+    }
+
+    @Test
+    void deleteUserWhenUserNotFoundShouldReturn404() throws Exception {
+        doThrow(new NotFoundException("User with uuid 'not-existing' not found"))
+                .when(userService).deleteUser("not-existing");
+
+        mockMvc.perform(delete("/users/not-existing"))
+                .andExpect(status().isNotFound());
+    }
+
+    private UserRequestDTO buildUpdateRequestDTO() {
+        UserRequestDTO request = new UserRequestDTO();
+        request.setFirstname("new firstname");
+        request.setLastname("new lastname");
+        request.setGender(Gender.F);
+        request.setLanguageId("lang-uuid");
+        request.setTaxIdNumber("TAXID01");
+        request.setEmail("new@mock.it");
+        request.setUsername("new.username");
+        request.setEnabled(false);
+        return request;
+    }
+
+    private UserRequestDTO buildCreateRequestDTO() {
+        UserRequestDTO request = new UserRequestDTO();
+        request.setFirstname("Mario");
+        request.setLastname("Rossi");
+        request.setGender(Gender.M);
+        request.setLanguageId("lang-uuid");
+        request.setTaxIdNumber("TAXID01");
+        request.setEmail("mario@mock.it");
+        request.setUsername("mario.rossi");
+        request.setPassword("password");
+        request.setEnabled(true);
+        return request;
+    }
+
 }

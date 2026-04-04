@@ -6,6 +6,7 @@ import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.service.UserService;
 import com.marcoaga02.modularhub.shared.util.PageResponseEntity;
 import com.marcoaga02.modularhub.shared.validation.OnCreate;
+import jakarta.validation.groups.Default;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -40,10 +41,25 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(@Validated(OnCreate.class) @RequestBody UserRequestDTO user) {
+    public ResponseEntity<UserResponseDTO> createUser(@Validated({OnCreate.class, Default.class}) @RequestBody UserRequestDTO user) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(userService.createUser(user));
+    }
+
+    @PutMapping("/{uuid}")
+    public ResponseEntity<UserResponseDTO> updateUser(
+            @PathVariable String uuid,
+            @Validated @RequestBody UserRequestDTO user
+    ) {
+        return ResponseEntity.ok(userService.updateUser(uuid, user));
+    }
+
+    @DeleteMapping("/{uuid}")
+    public ResponseEntity<Void> deleteUserByUuid(@PathVariable String uuid) {
+        userService.deleteUser(uuid);
+
+        return ResponseEntity.noContent().build();
     }
 
 }

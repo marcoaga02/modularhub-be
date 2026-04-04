@@ -25,7 +25,7 @@ class LanguageControllerTest {
     private LanguageService languageService;
 
     @Test
-    void testGetLanguages_shouldReturnListOfLanguages() throws Exception {
+    void testGetLanguagesShouldReturnListOfLanguages() throws Exception {
         LanguageResponseDTO languageResponseDto = new LanguageResponseDTO();
         languageResponseDto.setId("uuid");
         languageResponseDto.setCode("it-IT");

@@ -5,6 +5,8 @@ import com.marcoaga02.modularhub.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -20,6 +22,7 @@ public class User extends AuditableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "gender")
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private Gender gender;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -40,7 +40,8 @@
             ${project.basedir}/src/it/java
         </sonar.tests>
         <sonar.junit.reportPaths>
-            ${project.build.directory}/surefire-reports
+            ${project.build.directory}/surefire-reports,
+            ${project.build.directory}/failsafe-reports
         </sonar.junit.reportPaths>
     </properties>
 
@@ -162,10 +163,12 @@
                     <version>${jacoco.version}</version>
                     <configuration>
                         <excludes>
-                            <exclude>**/model/*.*</exclude>
                             <exclude>**/dto/*.*</exclude>
-                            <exclude>**/domain/*.*</exclude>
+                            <exclude>**/model/*.*</exclude>
+                            <exclude>**/repository/*.*</exclude>
                             <exclude>**/config/*.*</exclude>
+                            <exclude>**/constant/*.*</exclude>
+                            <exclude>**/domain/*.*</exclude>
                             <exclude>**/ModularhubApplication.*</exclude>
                         </excludes>
                     </configuration>
@@ -189,7 +192,7 @@
                                             <limit>
                                                 <counter>LINE</counter>
                                                 <value>COVEREDRATIO</value>
-<!--                                                <minimum>0.80</minimum>-->
+                                                <minimum>0.80</minimum>
                                             </limit>
                                         </limits>
                                     </rule>

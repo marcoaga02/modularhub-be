@@ -30,6 +30,7 @@ class LanguageServiceTest {
     private LanguageService languageService;
 
     private Language language1, language2;
+
     private LanguageResponseDTO languageResponseDTO1, languageResponseDTO2;
 
     @BeforeEach
@@ -58,7 +59,7 @@ class LanguageServiceTest {
     }
 
     @Test
-    void testGetLanguages_shouldReturnListOfLanguages() {
+    void testGetLanguagesShouldReturnListOfLanguages() {
         when(languageRepository.findAll()).thenReturn(List.of(language1));
         when(languageMapper.toDto(language1)).thenReturn(languageResponseDTO1);
 
@@ -73,7 +74,7 @@ class LanguageServiceTest {
     }
 
     @Test
-    void testGetLanguages_shouldReturnListOfLanguagesWithMultipleLanguages() {
+    void testGetLanguagesShouldReturnListOfLanguagesWithMultipleLanguages() {
         when(languageRepository.findAll()).thenReturn(List.of(language1, language2));
         when(languageMapper.toDto(language1)).thenReturn(languageResponseDTO1);
         when(languageMapper.toDto(language2)).thenReturn(languageResponseDTO2);
@@ -90,7 +91,7 @@ class LanguageServiceTest {
     }
 
     @Test
-    void testGetLanguages_whenNoLanguagesArePresent_shouldReturnEmptyList() {
+    void testGetLanguagesWhenNoLanguagesArePresentShouldReturnEmptyList() {
         when(languageRepository.findAll()).thenReturn(List.of());
 
         List<LanguageResponseDTO> result = languageService.getLanguages();

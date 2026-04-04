@@ -10,6 +10,7 @@ import com.marcoaga02.modularhub.modules.usermanagement.model.Language;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
+import com.marcoaga02.modularhub.modules.usermanagement.specification.UserSpecificationComposer;
 import com.marcoaga02.modularhub.shared.exceptions.BadRequestException;
 import com.marcoaga02.modularhub.shared.exceptions.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,9 @@ class UserServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private UserSpecificationComposer  userSpecComposer;
 
     @InjectMocks
     private UserService userService;
@@ -111,7 +115,7 @@ class UserServiceTest {
     }
 
     @Test
-    void testGetAllUsers_shouldReturnMappedPage() {
+    void testGetAllUsersShouldReturnMappedPage() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         Pageable pageable = PageRequest.of(0, 10);
         Page<User> userPage = new PageImpl<>(List.of(user1), pageable, 1);
@@ -127,12 +131,13 @@ class UserServiceTest {
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent()).containsExactly(userResponseDTO1);
 
+        verify(userSpecComposer).compose(criteria);
         verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable));
         verify(userMapper).toDto(user1);
     }
 
     @Test
-    void testGetAllUsers_whenNoUsersMatch_shouldReturnEmptyPage() {
+    void testGetAllUsersWhenNoUsersMatchShouldReturnEmptyPage() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         Pageable pageable = PageRequest.of(0, 10);
         Page<User> emptyPage = Page.empty(pageable);
@@ -144,12 +149,13 @@ class UserServiceTest {
 
         assertThat(result).isEmpty();
 
+        verify(userSpecComposer).compose(criteria);
         verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable));
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
-    void testGetAllUsers_shouldReturnMappedPageWithMultipleUsers() {
+    void testGetAllUsersShouldReturnMappedPageWithMultipleUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         Pageable pageable = PageRequest.of(0, 10);
 
@@ -164,14 +170,15 @@ class UserServiceTest {
 
         assertThat(result.getContent()).containsExactly(userResponseDTO1, userResponseDTO2);
 
+        verify(userSpecComposer).compose(criteria);
         verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable));
         verify(userMapper).toDto(user1);
         verify(userMapper).toDto(user2);
     }
 
     @Test
-    void testGetUserByUuid_whenUserExists_shouldReturnDTO() {
-        when(userRepository.findByUuid("abc-123"))
+    void testGetUserByUuidWhenUserExistsShouldReturnDTO() {
+        when(userRepository.findByUuidAndDeletedOnIsNull("abc-123"))
                 .thenReturn(Optional.of(user1));
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
@@ -180,25 +187,25 @@ class UserServiceTest {
 
         assertThat(result).isNotNull().isEqualTo(userResponseDTO1);
 
-        verify(userRepository).findByUuid("abc-123");
+        verify(userRepository).findByUuidAndDeletedOnIsNull("abc-123");
         verify(userMapper).toDto(user1);
     }
 
     @Test
-    void testGetUserByUuid_whenUserNotFound_shouldThrowNotFoundException() {
-        when(userRepository.findByUuid("not-existing"))
+    void testGetUserByUuidWhenUserNotFoundShouldThrowNotFoundException() {
+        when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getUserByUuid("not-existing"))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("User with uuid 'not-existing' not found");
 
-        verify(userRepository).findByUuid("not-existing");
+        verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
-    void testCreateUser_whenTaxIdNumberNotExists_shouldCreateAndReturnDTO() {
+    void testCreateUserWhenTaxIdNumberNotExistsShouldCreateAndReturnDTO() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_01");
         dto.setLanguageId("LANG_ID_01");
@@ -223,7 +230,7 @@ class UserServiceTest {
     }
 
     @Test
-    void testCreateUser_whenTaxIdNumberAlreadyExists_shouldThrowBadRequestException() {
+    void testCreateUserWhenTaxIdNumberAlreadyExistsShouldThrowBadRequestException() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_01");
         dto.setLanguageId("LANG_ID_01");
@@ -244,7 +251,7 @@ class UserServiceTest {
     }
 
     @Test
-    void testCreateUser_whenInvalidLanguageId_shouldThrowBadRequestException() {
+    void testCreateUserWhenInvalidLanguageIdShouldThrowBadRequestException() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_01");
         dto.setLanguageId("INVALID_LANG");
@@ -261,4 +268,166 @@ class UserServiceTest {
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
+
+    @Test
+    void testUpdateUserWhenValidShouldUpdateAndReturnDTO() {
+        UserRequestDTO dto = buildUserRequestDTO();
+        dto.setTaxIdNumber(user1.getTaxIdNumber());
+
+        when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
+                .thenReturn(Optional.of(user1));
+        when(languageRepository.findByUuid("LANG_ID_01"))
+                .thenReturn(language);
+        when(userRepository.save(user1))
+                .thenReturn(user1);
+        when(userMapper.toDto(user1))
+                .thenReturn(userResponseDTO1);
+
+        UserResponseDTO result = userService.updateUser(user1.getUuid(), dto);
+
+        assertThat(result).isNotNull().isEqualTo(userResponseDTO1);
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
+        verify(languageRepository).findByUuid("LANG_ID_01");
+        verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
+        verify(userMapper).updateEntity(dto, user1);
+        verify(userRepository).save(user1);
+        verify(userMapper).toDto(user1);
+    }
+
+    @Test
+    void testUpdateUserWhenUserNotFoundShouldThrowNotFoundException() {
+        UserRequestDTO dto = buildUserRequestDTO();
+
+        when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.updateUser("not-existing", dto))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("User with uuid 'not-existing' not found");
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(languageRepository, never()).findByUuid(any());
+        verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
+        verify(userMapper, never()).updateEntity(any(), any());
+        verify(userRepository, never()).save(any());
+        verify(userMapper, never()).toDto(any());
+    }
+
+    @Test
+    void testUpdateUserWhenInvalidLanguageShouldThrowBadRequestException() {
+        UserRequestDTO dto = buildUserRequestDTO();
+        dto.setLanguageId("INVALID_LANG");
+
+        when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
+                .thenReturn(Optional.of(user1));
+        when(languageRepository.findByUuid("INVALID_LANG"))
+                .thenReturn(null);
+
+        assertThatThrownBy(() -> userService.updateUser(user1.getUuid(), dto))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Language with uuid 'INVALID_LANG' not found");
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
+        verify(languageRepository).findByUuid("INVALID_LANG");
+        verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
+        verify(userMapper, never()).updateEntity(any(), any());
+        verify(userRepository, never()).save(any());
+        verify(userMapper, never()).toDto(any());
+    }
+
+    @Test
+    void testUpdateUserWhenTaxIdNumberChangedAndAlreadyExistsShouldThrowBadRequestException() {
+        UserRequestDTO dto = buildUserRequestDTO();
+        dto.setTaxIdNumber("TAX_ID_02");
+
+        when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
+                .thenReturn(Optional.of(user1));
+        when(languageRepository.findByUuid("LANG_ID_01"))
+                .thenReturn(language);
+        when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_02"))
+                .thenReturn(Optional.of(user2));
+
+        assertThatThrownBy(() -> userService.updateUser(user1.getUuid(), dto))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("User with taxIdNumber 'TAX_ID_02' already exists");
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
+        verify(languageRepository).findByUuid("LANG_ID_01");
+        verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_02");
+        verify(userMapper, never()).updateEntity(any(), any());
+        verify(userRepository, never()).save(any());
+        verify(userMapper, never()).toDto(any());
+    }
+
+    @Test
+    void testUpdateUserWhenTaxIdNumberChangedAndNotExistsShouldUpdateAndReturnDTO() {
+        UserRequestDTO dto = buildUserRequestDTO();
+        dto.setTaxIdNumber("TAX_ID_NEW");
+
+        when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
+                .thenReturn(Optional.of(user1));
+        when(languageRepository.findByUuid("LANG_ID_01"))
+                .thenReturn(language);
+        when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW"))
+                .thenReturn(Optional.empty());
+        when(userRepository.save(user1))
+                .thenReturn(user1);
+        when(userMapper.toDto(user1))
+                .thenReturn(userResponseDTO1);
+
+        UserResponseDTO result = userService.updateUser(user1.getUuid(), dto);
+
+        assertThat(result).isNotNull().isEqualTo(userResponseDTO1);
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
+        verify(languageRepository).findByUuid("LANG_ID_01");
+        verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW");
+        verify(userMapper).updateEntity(dto, user1);
+        verify(userRepository).save(user1);
+        verify(userMapper).toDto(user1);
+    }
+
+    @Test
+    void testDeleteUserWhenValidShouldLogicallyDeleteUser() {
+        when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
+                .thenReturn(Optional.of(user1));
+
+        assertThat(user1.getDeletedOn()).isNull();
+
+        userService.deleteUser(user1.getUuid());
+
+        assertThat(user1.getDeletedOn()).isNotNull();
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
+        verify(userRepository).save(user1);
+    }
+
+    @Test
+    void testDeleteUserWhenUserNotFoundShouldThrowNotFoundException() {
+        when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.deleteUser("not-existing"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("User with uuid 'not-existing' not found");
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(userRepository, never()).save(any());
+    }
+
+    private UserRequestDTO buildUserRequestDTO() {
+        UserRequestDTO dto = new UserRequestDTO();
+        dto.setFirstname("new firstname");
+        dto.setLastname("new lastname");
+        dto.setGender(Gender.F);
+        dto.setLanguageId("LANG_ID_01");
+        dto.setMobileNumber("9999");
+        dto.setTaxIdNumber("TAX_ID_NEW");
+        dto.setEmail("new@email.com");
+        dto.setUsername("new username");
+        dto.setEnabled(false);
+        return dto;
+    }
+
 }

@@ -45,12 +45,12 @@ class UserServiceIT {
 
     private User enabledUser, disabledUser, anotherUser;
     
-    private Language lang1;
+    private Language lang1, lang2;
 
     @BeforeEach
     void setUp() {
         lang1 = createLanguage("it-IT", "Italiano", true);
-        Language lang2 = createLanguage("en-US", "English", false);
+        lang2 = createLanguage("en-US", "English", false);
 
         enabledUser = createUser(
                 "firstname1",
@@ -123,7 +123,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenPageSizeIsOne_shouldReturnOnlyOneUser() {
+    void testGetAllUsersWhenPageSizeIsOneShouldReturnOnlyOneUser() {
         Page<UserResponseDTO> result = userService.getAllUsers(
                 null,
                 PageRequest.of(0, 1, Sort.by("firstname").ascending())
@@ -143,7 +143,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenPageSizeIsTwo_shouldReturnTwoUser() {
+    void testGetAllUsersWhenPageSizeIsTwoShouldReturnTwoUser() {
         Page<UserResponseDTO> result = userService.getAllUsers(
                 null,
                 PageRequest.of(0, 2, Sort.by("firstname").ascending())
@@ -164,7 +164,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenSecondPage_shouldReturnCorrectUsers() {
+    void testGetAllUsersWhenSecondPageShouldReturnCorrectUsers() {
         Page<UserResponseDTO> result = userService.getAllUsers(
                 null,
                 PageRequest.of(1, 2, Sort.by("firstname").ascending())
@@ -182,7 +182,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByText_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByTextShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("firstname1");
 
@@ -199,7 +199,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByTextMatchesLastname_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByTextMatchesLastnameShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("lastname2");
 
@@ -213,7 +213,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByTextMatchesEmail_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByTextMatchesEmailShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("another@email.com");
 
@@ -227,7 +227,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByFirstnameCaseInsensitive_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByFirstnameCaseInsensitiveShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("FIRSTNAME1");
 
@@ -241,7 +241,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByLastnameCaseInsensitive_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByLastnameCaseInsensitiveShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("LASTNAME2");
 
@@ -255,7 +255,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByEmailCaseInsensitive_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByEmailCaseInsensitiveShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("ANOTHER@EMAIL.COM");
 
@@ -269,7 +269,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByPartialFirstname_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByPartialFirstnameShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("irstname1");
 
@@ -282,7 +282,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByPartialLastname_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByPartialLastnameShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("astname2");
 
@@ -295,7 +295,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByPartialEmail_shouldReturnMatchingUsers() {
+    void testGetAllUsersWhenFilterByPartialEmailShouldReturnMatchingUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("another");
 
@@ -308,7 +308,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByTextWithNoMatch_shouldReturnEmptyPage() {
+    void testGetAllUsersWhenFilterByTextWithNoMatchShouldReturnEmptyPage() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("nonexistent");
 
@@ -319,7 +319,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetAllUsers_whenFilterByEmptyText_shouldReturnAllUsers() {
+    void testGetAllUsersWhenFilterByEmptyTextShouldReturnAllUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         criteria.setText("");
 
@@ -329,7 +329,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetUserByUuid_whenUserExists_shouldReturnUser() {
+    void testGetUserByUuidWhenUserExistsShouldReturnUser() {
         UserResponseDTO result = userService.getUserByUuid(enabledUser.getUuid());
 
         assertThat(result).isNotNull();
@@ -337,14 +337,14 @@ class UserServiceIT {
     }
 
     @Test
-    void testGetUserByUuid_whenUserNotFound_shouldThrowNotFoundException() {
+    void testGetUserByUuidWhenUserNotFoundShouldThrowNotFoundException() {
         assertThatThrownBy(() -> userService.getUserByUuid("non-existing-uuid"))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
     }
 
     @Test
-    void testCreateUser_whenTaxIdNumberNotExists_shouldCreateAndReturnDTO() {
+    void testCreateUserWhenTaxIdNumberNotExistsShouldCreateAndReturnDTO() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setFirstname("New firstname");
         dto.setLastname("New lastname");
@@ -364,7 +364,7 @@ class UserServiceIT {
     }
 
     @Test
-    void testCreateUser_whenInvalidLanguageId_shouldThrowBadRequestException() {
+    void testCreateUserWhenInvalidLanguageIdShouldThrowBadRequestException() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setFirstname("New firstname");
         dto.setLastname("New lastname");
@@ -380,6 +380,85 @@ class UserServiceIT {
         assertThatThrownBy(() -> userService.createUser(dto))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Language with uuid 'NON-EXIST-LANG' not found");
+    }
+
+    @Test
+    void testUpdateUserWhenValidShouldUpdateAndReturnDTO() {
+        UserRequestDTO dto = buildUserRequestDTO(lang2.getUuid(), enabledUser.getTaxIdNumber());
+
+        UserResponseDTO result = userService.updateUser(enabledUser.getUuid(), dto);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(enabledUser.getUuid());
+        assertThat(result.getFirstname()).isEqualTo("new firstname");
+        assertThat(result.getLastname()).isEqualTo("new lastname");
+        assertThat(result.getGender()).isEqualTo(Gender.F.name());
+        assertThat(result.getMobileNumber()).isEqualTo("9999");
+        assertThat(result.getTaxIdNumber()).isEqualTo(enabledUser.getTaxIdNumber());
+        assertThat(result.getEmail()).isEqualTo("new@email.com");
+        assertThat(result.getEnabled()).isFalse();
+        assertThat(result.getLanguage().getId()).isEqualTo(lang2.getUuid());
+    }
+
+    @Test
+    void testUpdateUserWhenTaxIdNumberChangedAndNotExistsShouldUpdateAndReturnDTO() {
+        UserRequestDTO dto = buildUserRequestDTO(lang1.getUuid(), "TAX_ID_NEW");
+
+        UserResponseDTO result = userService.updateUser(enabledUser.getUuid(), dto);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(enabledUser.getUuid());
+        assertThat(result.getTaxIdNumber()).isEqualTo("TAX_ID_NEW");
+    }
+
+    @Test
+    void testUpdateUserWhenUserNotFoundShouldThrowNotFoundException() {
+        UserRequestDTO dto = buildUserRequestDTO(lang1.getUuid(), "TAX_ID_NEW");
+
+        assertThatThrownBy(() -> userService.updateUser("non-existing-uuid", dto))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
+    }
+
+    @Test
+    void testUpdateUserWhenInvalidLanguageShouldThrowBadRequestException() {
+        UserRequestDTO dto = buildUserRequestDTO("NON-EXIST-LANG", enabledUser.getTaxIdNumber());
+
+        assertThatThrownBy(() -> userService.updateUser(enabledUser.getUuid(), dto))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Language with uuid 'NON-EXIST-LANG' not found");
+    }
+
+    @Test
+    void testUpdateUserWhenTaxIdNumberChangedAndAlreadyExistsShouldThrowBadRequestException() {
+        UserRequestDTO dto = buildUserRequestDTO(lang1.getUuid(), anotherUser.getTaxIdNumber());
+
+        assertThatThrownBy(() -> userService.updateUser(enabledUser.getUuid(), dto))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining(String.format("User with taxIdNumber '%s' already exists", anotherUser.getTaxIdNumber()));
+    }
+
+    @Test
+    void testDeleteUserWhenUserExistsShouldSoftDelete() {
+        User existing = userRepository.findByUuidAndDeletedOnIsNull(enabledUser.getUuid())
+                .orElseThrow();
+
+        assertThat(existing.getDeletedOn()).isNull();
+
+        userService.deleteUser(enabledUser.getUuid());
+
+        entityManager.flush();
+        entityManager.clear();
+
+        User deleted = userRepository.findById(enabledUser.getId()).orElseThrow();
+        assertThat(deleted.getDeletedOn()).isNotNull();
+    }
+
+    @Test
+    void testDeleteUserWhenUserNotFoundShouldThrowNotFoundException() {
+        assertThatThrownBy(() -> userService.deleteUser("non-existing-uuid"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
     }
 
     private User createUser(String firstname,
@@ -415,6 +494,21 @@ class UserServiceIT {
         languageRepository.save(language);
 
         return language;
+    }
+
+    private UserRequestDTO buildUserRequestDTO(String languageId, String taxIdNumber) {
+        UserRequestDTO dto = new UserRequestDTO();
+        dto.setFirstname("new firstname");
+        dto.setLastname("new lastname");
+        dto.setGender(Gender.F);
+        dto.setLanguageId(languageId);
+        dto.setMobileNumber("9999");
+        dto.setTaxIdNumber(taxIdNumber);
+        dto.setEmail("new@email.com");
+        dto.setUsername("new username");
+        dto.setPassword("newpassword");
+        dto.setEnabled(false);
+        return dto;
     }
 
 }
