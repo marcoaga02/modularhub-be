@@ -17,24 +17,31 @@
 
     <properties>
         <java.version>21</java.version>
+        <assertj.version>3.27.7</assertj.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
         <pitest.version>1.23.0</pitest.version>
         <pitest-junit5.version>1.2.3</pitest-junit5.version>
         <jacoco.version>0.8.14</jacoco.version>
         <coveralls.version>5.0.0</coveralls.version>
         <surefire-report.version>3.5.5</surefire-report.version>
+        <buildhelper.version>3.6.0</buildhelper.version>
 
         <sonar.organization>marcoaga02</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectKey>marcoaga02_modularhub-be</sonar.projectKey>
         <sonar.coverage.exclusions>
             **/model/*.*,
+            **/dto/*.*,
             **/ModularhubApplication.*
         </sonar.coverage.exclusions>
         <sonar.tests>
-            ${project.basedir}/src/test/java
+            ${project.basedir}/src/test/java,
+            ${project.basedir}/src/it/java
         </sonar.tests>
         <sonar.junit.reportPaths>
-            ${project.build.directory}/surefire-reports
+            ${project.build.directory}/surefire-reports,
+            ${project.build.directory}/failsafe-reports
         </sonar.junit.reportPaths>
     </properties>
 
@@ -43,7 +50,7 @@
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
-                <version>1.21.4</version>
+                <version>${testcontainers.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -69,7 +76,12 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -113,6 +125,28 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>${mapstruct.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -129,7 +163,12 @@
                     <version>${jacoco.version}</version>
                     <configuration>
                         <excludes>
+                            <exclude>**/dto/*.*</exclude>
                             <exclude>**/model/*.*</exclude>
+                            <exclude>**/repository/*.*</exclude>
+                            <exclude>**/config/*.*</exclude>
+                            <exclude>**/constant/*.*</exclude>
+                            <exclude>**/domain/*.*</exclude>
                             <exclude>**/ModularhubApplication.*</exclude>
                         </excludes>
                     </configuration>
@@ -183,14 +222,26 @@
                     </dependencies>
                     <configuration>
                         <targetClasses>
-                            <!-- TODO definire classi target-->
+                            <param>com.marcoaga02.modularhub.*</param>
                         </targetClasses>
                         <targetTests>
-                            <!-- TODO definire test target-->
+                            <param>com.marcoaga02.modularhub.*</param>
                         </targetTests>
                         <mutators>
                             <mutator>DEFAULTS</mutator>
                         </mutators>
+                        <excludedClasses>
+                            <param>com.marcoaga02.modularhub.shared.domain.*</param>
+                            <param>com.marcoaga02.modularhub.shared.dto.*</param>
+                            <param>com.marcoaga02.modularhub.shared.constant.*</param>
+                            <param>com.marcoaga02.modularhub.shared.validation.*</param>
+                            <param>com.marcoaga02.modularhub.shared.config.*</param>
+                            <param>com.marcoaga02.modularhub.shared.exceptions.*</param>
+                            <param>com.marcoaga02.modularhub.ModularhubApplication</param>
+                            <param>com.marcoaga02.modularhub.*.model.*</param>
+                            <param>com.marcoaga02.modularhub.*.dto.*</param>
+                            <param>com.marcoaga02.modularhub.*.repository.*</param>
+                        </excludedClasses>
                         <mutationThreshold>80</mutationThreshold>
                     </configuration>
                 </plugin>
@@ -199,6 +250,37 @@
 
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${buildhelper.version}</version>
+                <executions>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/it/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -206,6 +288,11 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

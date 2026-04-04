@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootTest
 @Import(TestcontainersConfig.class)
-class ModularhubApplicationTests {
+class ModularhubApplicationIT {
 
 	@Test
 	void contextLoads() {
