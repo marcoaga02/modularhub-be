@@ -1,9 +1,10 @@
-package com.marcoaga02.modularhub.shared.service;
+package com.marcoaga02.modularhub.shared.provider;
 
 import com.marcoaga02.modularhub.shared.dto.IdentityGroupDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserCreateRequestDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserUpdateRequestDTO;
+import com.marcoaga02.modularhub.shared.service.IdentityProviderService;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;

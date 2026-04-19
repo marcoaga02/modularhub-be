@@ -171,6 +171,7 @@
                         <excludes>
                             <exclude>**/dto/*.*</exclude>
                             <exclude>**/model/*.*</exclude>
+                            <exclude>**/provider/*.*</exclude>
                             <exclude>**/repository/*.*</exclude>
                             <exclude>**/config/*.*</exclude>
                             <exclude>**/property/*.*</exclude>
@@ -245,6 +246,7 @@
                             <param>com.marcoaga02.modularhub.shared.config.*</param>
                             <param>com.marcoaga02.modularhub.shared.property.*</param>
                             <param>com.marcoaga02.modularhub.shared.exception.*</param>
+                            <param>com.marcoaga02.modularhub.shared.provider.*</param>
                             <param>com.marcoaga02.modularhub.ModularhubApplication</param>
                             <param>com.marcoaga02.modularhub.*.model.*</param>
                             <param>com.marcoaga02.modularhub.*.dto.*</param>
