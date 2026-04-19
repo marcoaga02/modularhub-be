@@ -1,6 +1,7 @@
 package com.marcoaga02.modularhub.modules.usermanagement.service;
 
 import com.marcoaga02.modularhub.ModularhubApplication;
+import com.marcoaga02.modularhub.config.BaseITClass;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
@@ -9,8 +10,12 @@ import com.marcoaga02.modularhub.modules.usermanagement.model.Language;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
-import com.marcoaga02.modularhub.shared.exceptions.BadRequestException;
-import com.marcoaga02.modularhub.shared.exceptions.NotFoundException;
+import com.marcoaga02.modularhub.shared.domain.CurrentAccount;
+import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
+import com.marcoaga02.modularhub.shared.exception.BadRequestException;
+import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.service.CurrentAccountService;
+import com.marcoaga02.modularhub.shared.service.IdentityService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,18 +24,29 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = ModularhubApplication.class)
 @Transactional
-class UserServiceIT {
+class UserServiceIT extends BaseITClass {
 
     public static final String TAX_ID_NUMBER = "USR_1";
+
+    @MockitoBean
+    private IdentityService identityService;
+
+    @MockitoBean
+    private CurrentAccountService currentAccountService;
+
     @Autowired
     private UserService userService;
 
@@ -44,11 +60,21 @@ class UserServiceIT {
     private EntityManager entityManager;
 
     private User enabledUser, disabledUser, anotherUser;
-    
+
     private Language lang1, lang2;
 
     @BeforeEach
     void setUp() {
+        CurrentAccount currentAccount = new CurrentAccount(
+                "current-id",
+                "current@email.com",
+                "current.username",
+                Set.of()
+        );
+
+        when(currentAccountService.getCurrentAccount())
+                .thenReturn(currentAccount);
+
         lang1 = createLanguage("it-IT", "Italiano", true);
         lang2 = createLanguage("en-US", "English", false);
 
@@ -60,6 +86,7 @@ class UserServiceIT {
                 "0000",
                 TAX_ID_NUMBER,
                 "enabled@email.com",
+                "username1",
                 true
         );
 
@@ -71,6 +98,7 @@ class UserServiceIT {
                 "1111",
                 "USR_2",
                 "disabled@email.com",
+                "username2",
                 false
         );
 
@@ -82,6 +110,7 @@ class UserServiceIT {
                 "2222",
                 "USR_3",
                 "another@email.com",
+                "username3",
                 true
         );
 
@@ -93,6 +122,7 @@ class UserServiceIT {
                 "3333",
                 "USR_4",
                 "deleted@email.com",
+                "username4",
                 true
         );
         deletedUser.setDeletedOn(OffsetDateTime.now());
@@ -330,6 +360,9 @@ class UserServiceIT {
 
     @Test
     void testGetUserByUuidWhenUserExistsShouldReturnUser() {
+        when(identityService.getUserById(any()))
+                .thenReturn(new IdentityUserResponseDTO());
+
         UserResponseDTO result = userService.getUserByUuid(enabledUser.getUuid());
 
         assertThat(result).isNotNull();
@@ -451,6 +484,7 @@ class UserServiceIT {
         entityManager.clear();
 
         User deleted = userRepository.findById(enabledUser.getId()).orElseThrow();
+        assertThat(deleted.getDeletedBy()).isEqualTo("current-id");
         assertThat(deleted.getDeletedOn()).isNotNull();
     }
 
@@ -468,6 +502,7 @@ class UserServiceIT {
                             String mobileNumber,
                             String taxIdNumber,
                             String email,
+                            String username,
                             Boolean enabled
     ) {
         User user = new User();
@@ -478,6 +513,7 @@ class UserServiceIT {
         user.setMobileNumber(mobileNumber);
         user.setTaxIdNumber(taxIdNumber);
         user.setEmail(email);
+        user.setUsername(username);
         user.setEnabled(enabled);
 
         userRepository.save(user);

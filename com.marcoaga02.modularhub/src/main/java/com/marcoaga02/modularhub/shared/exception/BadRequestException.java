@@ -1,4 +1,4 @@
-package com.marcoaga02.modularhub.shared.exceptions;
+package com.marcoaga02.modularhub.shared.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

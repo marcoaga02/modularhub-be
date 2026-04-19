@@ -1,13 +1,13 @@
 package com.marcoaga02.modularhub;
 
-import com.marcoaga02.modularhub.config.TestcontainersConfig;
+import com.marcoaga02.modularhub.config.BaseITClass;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@Import(TestcontainersConfig.class)
-class ModularhubApplicationIT {
+@ActiveProfiles("test")
+class ModularhubApplicationIT extends BaseITClass {
 
 	@Test
 	void contextLoads() {

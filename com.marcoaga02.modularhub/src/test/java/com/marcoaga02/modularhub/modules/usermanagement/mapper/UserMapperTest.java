@@ -13,6 +13,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.time.OffsetDateTime;
+import java.util.List;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -26,6 +29,10 @@ class UserMapperTest {
 
     @MockitoBean
     private LanguageRepository languageRepository;
+
+    private static final OffsetDateTime CREATED_ON = OffsetDateTime.parse("2026-01-01T10:15:30+01:00");
+    private static final OffsetDateTime UPDATED_ON = OffsetDateTime.parse("2026-02-01T10:15:30+01:00");
+    private static final OffsetDateTime DELETED_ON = OffsetDateTime.parse("2026-03-01T10:15:30+01:00");
 
     @Test
     void testToDtoShouldMapAllFields() {
@@ -44,7 +51,13 @@ class UserMapperTest {
         assertThat(dto.getMobileNumber()).isEqualTo("0000");
         assertThat(dto.getTaxIdNumber()).isEqualTo("USR1");
         assertThat(dto.getEmail()).isEqualTo("user@email.com");
+        assertThat(dto.getUsername()).isEqualTo("username");
         assertThat(dto.getEnabled()).isTrue();
+        assertThat(dto.getAudit()).isNotNull();
+        assertThat(dto.getAudit().getCreatedOn()).isEqualTo(CREATED_ON);
+        assertThat(dto.getAudit().getUpdatedOn()).isEqualTo(UPDATED_ON);
+        assertThat(dto.getAudit().getCreatedBy()).isEqualTo("user creator");
+        assertThat(dto.getAudit().getUpdatedBy()).isEqualTo("user updater");
     }
 
     @Test
@@ -72,8 +85,15 @@ class UserMapperTest {
         assertThat(existing.getMobileNumber()).isEqualTo("9999");
         assertThat(existing.getTaxIdNumber()).isEqualTo("NEW1");
         assertThat(existing.getEmail()).isEqualTo("new@email.com");
+        assertThat(existing.getUsername()).isEqualTo("new username");
         assertThat(existing.getEnabled()).isFalse();
         assertThat(existing.getUuid()).isEqualTo(originalUuid);
+        assertThat(existing.getCreatedOn()).isEqualTo(CREATED_ON);
+        assertThat(existing.getUpdatedOn()).isEqualTo(UPDATED_ON);
+        assertThat(existing.getDeletedOn()).isEqualTo(DELETED_ON);
+        assertThat(existing.getCreatedBy()).isEqualTo("user creator");
+        assertThat(existing.getUpdatedBy()).isEqualTo("user updater");
+        assertThat(existing.getDeletedBy()).isEqualTo("user deleter");
     }
 
     @Test
@@ -96,8 +116,15 @@ class UserMapperTest {
         assertThat(existing.getMobileNumber()).isEqualTo("0000");
         assertThat(existing.getTaxIdNumber()).isEqualTo("USR1");
         assertThat(existing.getEmail()).isEqualTo("user@email.com");
+        assertThat(existing.getUsername()).isEqualTo("username");
         assertThat(existing.getEnabled()).isTrue();
         assertThat(existing.getUuid()).isEqualTo(originalUuid);
+        assertThat(existing.getCreatedOn()).isEqualTo(CREATED_ON);
+        assertThat(existing.getUpdatedOn()).isEqualTo(UPDATED_ON);
+        assertThat(existing.getDeletedOn()).isEqualTo(DELETED_ON);
+        assertThat(existing.getCreatedBy()).isEqualTo("user creator");
+        assertThat(existing.getUpdatedBy()).isEqualTo("user updater");
+        assertThat(existing.getDeletedBy()).isEqualTo("user deleter");
     }
 
     @Test
@@ -131,7 +158,15 @@ class UserMapperTest {
         user.setMobileNumber("0000");
         user.setTaxIdNumber("USR1");
         user.setEmail("user@email.com");
+        user.setUsername("username");
+        user.setIdentityId("identity");
         user.setEnabled(true);
+        user.setCreatedOn(CREATED_ON);
+        user.setUpdatedOn(UPDATED_ON);
+        user.setDeletedOn(DELETED_ON);
+        user.setCreatedBy("user creator");
+        user.setUpdatedBy("user updater");
+        user.setDeletedBy("user deleter");
         return user;
     }
 
@@ -145,6 +180,8 @@ class UserMapperTest {
         dto.setTaxIdNumber("NEW1");
         dto.setEmail("new@email.com");
         dto.setUsername("new username");
+        dto.setPassword("new password");
+        dto.setGroupsIds(List.of("group1", "group2"));
         dto.setEnabled(false);
         return dto;
     }

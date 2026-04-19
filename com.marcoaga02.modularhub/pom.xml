@@ -26,6 +26,7 @@
         <coveralls.version>5.0.0</coveralls.version>
         <surefire-report.version>3.5.5</surefire-report.version>
         <buildhelper.version>3.6.0</buildhelper.version>
+        <keycloak.version>26.0.8</keycloak.version>
 
         <sonar.organization>marcoaga02</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -83,6 +84,16 @@
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-admin-client</artifactId>
+            <version>${keycloak.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -126,11 +137,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${mapstruct.version}</version>
@@ -167,6 +173,7 @@
                             <exclude>**/model/*.*</exclude>
                             <exclude>**/repository/*.*</exclude>
                             <exclude>**/config/*.*</exclude>
+                            <exclude>**/property/*.*</exclude>
                             <exclude>**/constant/*.*</exclude>
                             <exclude>**/domain/*.*</exclude>
                             <exclude>**/ModularhubApplication.*</exclude>
@@ -236,7 +243,8 @@
                             <param>com.marcoaga02.modularhub.shared.constant.*</param>
                             <param>com.marcoaga02.modularhub.shared.validation.*</param>
                             <param>com.marcoaga02.modularhub.shared.config.*</param>
-                            <param>com.marcoaga02.modularhub.shared.exceptions.*</param>
+                            <param>com.marcoaga02.modularhub.shared.property.*</param>
+                            <param>com.marcoaga02.modularhub.shared.exception.*</param>
                             <param>com.marcoaga02.modularhub.ModularhubApplication</param>
                             <param>com.marcoaga02.modularhub.*.model.*</param>
                             <param>com.marcoaga02.modularhub.*.dto.*</param>

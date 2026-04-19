@@ -1,6 +1,6 @@
 package com.marcoaga02.modularhub.shared.constant;
 
-public class PaginationHeaders {
+public final class PaginationHeaders {
 
     private PaginationHeaders() {}
 

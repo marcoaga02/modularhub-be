@@ -11,11 +11,19 @@ import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.specification.UserSpecificationComposer;
-import com.marcoaga02.modularhub.shared.exceptions.BadRequestException;
-import com.marcoaga02.modularhub.shared.exceptions.NotFoundException;
+import com.marcoaga02.modularhub.shared.domain.CurrentAccount;
+import com.marcoaga02.modularhub.shared.dto.IdentityGroupDTO;
+import com.marcoaga02.modularhub.shared.dto.IdentityUserCreateRequestDTO;
+import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
+import com.marcoaga02.modularhub.shared.dto.IdentityUserUpdateRequestDTO;
+import com.marcoaga02.modularhub.shared.exception.BadRequestException;
+import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.service.CurrentAccountService;
+import com.marcoaga02.modularhub.shared.service.IdentityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -28,6 +36,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,6 +57,12 @@ class UserServiceTest {
 
     @Mock
     private UserSpecificationComposer  userSpecComposer;
+
+    @Mock
+    private IdentityService identityService;
+
+    @Mock
+    private CurrentAccountService currentAccountService;
 
     @InjectMocks
     private UserService userService;
@@ -79,6 +94,7 @@ class UserServiceTest {
         user1.setMobileNumber("0000");
         user1.setTaxIdNumber("TAX_ID_01");
         user1.setEmail("email@mock.it");
+        user1.setUsername("username1");
         user1.setEnabled(true);
 
         userResponseDTO1 = new UserResponseDTO();
@@ -90,6 +106,7 @@ class UserServiceTest {
         userResponseDTO1.setMobileNumber("0000");
         userResponseDTO1.setTaxIdNumber("TAX_ID_01");
         userResponseDTO1.setEmail("mario@mock.it");
+        userResponseDTO1.setUsername("username1");
         userResponseDTO1.setEnabled(true);
 
         user2 = new User();
@@ -100,6 +117,7 @@ class UserServiceTest {
         user2.setMobileNumber("1111");
         user2.setTaxIdNumber("TAX_ID_02");
         user2.setEmail("vittoria@mock.it");
+        user2.setUsername("username2");
         user2.setEnabled(false);
 
         userResponseDTO2 = new UserResponseDTO();
@@ -111,6 +129,7 @@ class UserServiceTest {
         userResponseDTO2.setMobileNumber("1111");
         userResponseDTO2.setTaxIdNumber("TAX_ID_02");
         userResponseDTO2.setEmail("vittoria@mock.it");
+        userResponseDTO2.setUsername("username2");
         userResponseDTO2.setEnabled(false);
     }
 
@@ -178,18 +197,76 @@ class UserServiceTest {
 
     @Test
     void testGetUserByUuidWhenUserExistsShouldReturnDTO() {
-        when(userRepository.findByUuidAndDeletedOnIsNull("abc-123"))
+        final String userUuid = "abc-123";
+        final String identityId = "identityId";
+
+        user1.setIdentityId(identityId);
+
+        IdentityGroupDTO groupDTO = new IdentityGroupDTO();
+        groupDTO.setId("group-id");
+        groupDTO.setName("First Group");
+
+        IdentityUserResponseDTO userResponseDTO = new IdentityUserResponseDTO();
+        userResponseDTO.setId(identityId);
+        userResponseDTO.setUsername("username");
+        userResponseDTO.setEmail("email");
+        userResponseDTO.setFirstName("firstName");
+        userResponseDTO.setLastName("lastName");
+        userResponseDTO.setEnabled(true);
+        userResponseDTO.setGroups(List.of(groupDTO));
+
+        when(userRepository.findByUuidAndDeletedOnIsNull(userUuid))
                 .thenReturn(Optional.of(user1));
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
+        when(identityService.getUserById(identityId))
+                .thenReturn(userResponseDTO);
 
-        UserResponseDTO result = userService.getUserByUuid("abc-123");
+        UserResponseDTO result = userService.getUserByUuid(userUuid);
 
         assertThat(result).isNotNull().isEqualTo(userResponseDTO1);
 
-        verify(userRepository).findByUuidAndDeletedOnIsNull("abc-123");
+        verify(userRepository).findByUuidAndDeletedOnIsNull(userUuid);
+        verify(identityService).getUserById(identityId);
         verify(userMapper).toDto(user1);
     }
+
+    @Test
+    void testGetUserByUuidWhenUserExistsNullGroupsShouldReturnDTO() {
+        final String userUuid = "abc-123";
+        final String identityId = "identityId";
+
+        user1.setIdentityId(identityId);
+
+        IdentityGroupDTO groupDTO = new IdentityGroupDTO();
+        groupDTO.setId("group-id");
+        groupDTO.setName("First Group");
+
+        IdentityUserResponseDTO userResponseDTO = new IdentityUserResponseDTO();
+        userResponseDTO.setId(identityId);
+        userResponseDTO.setUsername("username");
+        userResponseDTO.setEmail("email");
+        userResponseDTO.setFirstName("firstName");
+        userResponseDTO.setLastName("lastName");
+        userResponseDTO.setEnabled(true);
+        userResponseDTO.setGroups(null);
+
+        when(userRepository.findByUuidAndDeletedOnIsNull(userUuid))
+                .thenReturn(Optional.of(user1));
+        when(userMapper.toDto(user1))
+                .thenReturn(userResponseDTO1);
+        when(identityService.getUserById(identityId))
+                .thenReturn(userResponseDTO);
+
+        UserResponseDTO result = userService.getUserByUuid(userUuid);
+
+        assertThat(result).isNotNull().isEqualTo(userResponseDTO1);
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull(userUuid);
+        verify(identityService).getUserById(identityId);
+        verify(userMapper).toDto(user1);
+    }
+
 
     @Test
     void testGetUserByUuidWhenUserNotFoundShouldThrowNotFoundException() {
@@ -206,27 +283,52 @@ class UserServiceTest {
 
     @Test
     void testCreateUserWhenTaxIdNumberNotExistsShouldCreateAndReturnDTO() {
-        UserRequestDTO dto = new UserRequestDTO();
-        dto.setTaxIdNumber("TAX_ID_01");
-        dto.setLanguageId("LANG_ID_01");
+        final String identityId = "identityId";
+
+        UserRequestDTO dto = buildUserRequestDTO();
 
         when(languageRepository.findByUuid("LANG_ID_01"))
                 .thenReturn(language);
-        when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_01"))
+        when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW"))
                 .thenReturn(Optional.empty());
         when(userRepository.save(any(User.class)))
                 .thenReturn(user1);
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
+        when(identityService.createUser(any(IdentityUserCreateRequestDTO.class)))
+                .thenReturn(identityId);
 
         UserResponseDTO result = userService.createUser(dto);
 
         assertThat(result).isNotNull().isEqualTo(userResponseDTO1);
 
         verify(languageRepository).findByUuid("LANG_ID_01");
-        verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_01");
+        verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW");
+
+        ArgumentCaptor<IdentityUserCreateRequestDTO> captor =
+                ArgumentCaptor.forClass(IdentityUserCreateRequestDTO.class);
+
+        verify(identityService).createUser(captor.capture());
+
+        IdentityUserCreateRequestDTO captured = captor.getValue();
+
+        assertThat(captured.getUsername()).isEqualTo("new username");
+        assertThat(captured.getEmail()).isEqualTo("new@email.com");
+        assertThat(captured.getFirstName()).isEqualTo("new firstname");
+        assertThat(captured.getLastName()).isEqualTo("new lastname");
+        assertThat(captured.getEnabled()).isFalse();
+        assertThat(captured.getPassword()).isEqualTo("password");
+        assertThat(captured.getGroupIds()).containsExactly("group-id");
+        assertThat(captured.getEmailVerified()).isTrue();
+
         verify(userMapper).toDto(user1);
-        verify(userRepository).save(any(User.class));
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+
+        verify(userRepository).save(userCaptor.capture());
+
+        User savedUser = userCaptor.getValue();
+        assertThat(savedUser.getIdentityId()).isEqualTo(identityId);
     }
 
     @Test
@@ -246,6 +348,7 @@ class UserServiceTest {
 
         verify(languageRepository).findByUuid("LANG_ID_01");
         verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_01");
+        verify(identityService, never()).createUser(any(IdentityUserCreateRequestDTO.class));
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
@@ -265,12 +368,16 @@ class UserServiceTest {
 
         verify(languageRepository).findByUuid("INVALID_LANG");
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
+        verify(identityService, never()).createUser(any(IdentityUserCreateRequestDTO.class));
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
     void testUpdateUserWhenValidShouldUpdateAndReturnDTO() {
+        final String identityId = "identityId";
+        user1.setIdentityId(identityId);
+
         UserRequestDTO dto = buildUserRequestDTO();
         dto.setTaxIdNumber(user1.getTaxIdNumber());
 
@@ -291,6 +398,21 @@ class UserServiceTest {
         verify(languageRepository).findByUuid("LANG_ID_01");
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper).updateEntity(dto, user1);
+
+        ArgumentCaptor<IdentityUserUpdateRequestDTO> captor =
+                ArgumentCaptor.forClass(IdentityUserUpdateRequestDTO.class);
+
+        verify(identityService).updateUser(eq(identityId), captor.capture());
+
+        IdentityUserUpdateRequestDTO captured = captor.getValue();
+
+        assertThat(captured.getUsername()).isEqualTo("new username");
+        assertThat(captured.getEmail()).isEqualTo("new@email.com");
+        assertThat(captured.getFirstName()).isEqualTo("new firstname");
+        assertThat(captured.getLastName()).isEqualTo("new lastname");
+        assertThat(captured.getEnabled()).isFalse();
+        assertThat(captured.getGroupIds()).containsExactly("group-id");
+
         verify(userRepository).save(user1);
         verify(userMapper).toDto(user1);
     }
@@ -310,6 +432,7 @@ class UserServiceTest {
         verify(languageRepository, never()).findByUuid(any());
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper, never()).updateEntity(any(), any());
+        verify(identityService, never()).updateUser(any(), any());
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
@@ -332,6 +455,7 @@ class UserServiceTest {
         verify(languageRepository).findByUuid("INVALID_LANG");
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper, never()).updateEntity(any(), any());
+        verify(identityService, never()).updateUser(any(), any());
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
@@ -356,12 +480,16 @@ class UserServiceTest {
         verify(languageRepository).findByUuid("LANG_ID_01");
         verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_02");
         verify(userMapper, never()).updateEntity(any(), any());
+        verify(identityService, never()).updateUser(any(), any());
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
     void testUpdateUserWhenTaxIdNumberChangedAndNotExistsShouldUpdateAndReturnDTO() {
+        final String identityId = "identityId";
+        user1.setIdentityId(identityId);
+
         UserRequestDTO dto = buildUserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_NEW");
 
@@ -384,22 +512,48 @@ class UserServiceTest {
         verify(languageRepository).findByUuid("LANG_ID_01");
         verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW");
         verify(userMapper).updateEntity(dto, user1);
+
+        ArgumentCaptor<IdentityUserUpdateRequestDTO> captor =
+                ArgumentCaptor.forClass(IdentityUserUpdateRequestDTO.class);
+
+        verify(identityService).updateUser(eq(identityId), captor.capture());
+
+        IdentityUserUpdateRequestDTO captured = captor.getValue();
+
+        assertThat(captured.getUsername()).isEqualTo("new username");
+        assertThat(captured.getEmail()).isEqualTo("new@email.com");
+        assertThat(captured.getFirstName()).isEqualTo("new firstname");
+        assertThat(captured.getLastName()).isEqualTo("new lastname");
+        assertThat(captured.getEnabled()).isFalse();
+        assertThat(captured.getGroupIds()).containsExactly("group-id");
+
         verify(userRepository).save(user1);
         verify(userMapper).toDto(user1);
     }
 
     @Test
     void testDeleteUserWhenValidShouldLogicallyDeleteUser() {
+        CurrentAccount currentAccount = new CurrentAccount(
+                "keycloakId",
+                "user@email.com",
+                "username",
+                Set.of()
+        );
+
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
+        when(currentAccountService.getCurrentAccount())
+                .thenReturn(currentAccount);
 
         assertThat(user1.getDeletedOn()).isNull();
 
         userService.deleteUser(user1.getUuid());
 
+        assertThat(user1.getDeletedBy()).isEqualTo("keycloakId");
         assertThat(user1.getDeletedOn()).isNotNull();
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
+        verify(currentAccountService).getCurrentAccount();
         verify(userRepository).save(user1);
     }
 
@@ -413,6 +567,7 @@ class UserServiceTest {
                 .hasMessageContaining("User with uuid 'not-existing' not found");
 
         verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(currentAccountService, never()).getCurrentAccount();
         verify(userRepository, never()).save(any());
     }
 
@@ -427,6 +582,8 @@ class UserServiceTest {
         dto.setEmail("new@email.com");
         dto.setUsername("new username");
         dto.setEnabled(false);
+        dto.setPassword("password");
+        dto.setGroupsIds(List.of("group-id"));
         return dto;
     }
 

@@ -5,7 +5,7 @@ import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Gender;
 import com.marcoaga02.modularhub.modules.usermanagement.service.UserService;
 import com.marcoaga02.modularhub.shared.constant.PaginationHeaders;
-import com.marcoaga02.modularhub.shared.exceptions.NotFoundException;
+import com.marcoaga02.modularhub.shared.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -12,8 +12,6 @@ import java.time.OffsetDateTime;
 public class AuditDTO {
     private OffsetDateTime createdOn;
     private OffsetDateTime updatedOn;
-    private OffsetDateTime deletedOn;
     private String createdBy;
     private String updatedBy;
-    private String deletedBy;
 }

@@ -14,6 +14,9 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "users")
 public class User extends AuditableEntity {
 
+    @Column(name = "identity_id")
+    private String identityId;
+
     @Column(name = "firstname")
     private String firstname;
 
@@ -37,6 +40,9 @@ public class User extends AuditableEntity {
 
     @Column(name = "email", unique = true)
     private String email;
+
+    @Column(name = "username", unique = true)
+    private String username;
 
     @Column(name = "enabled")
     private Boolean enabled;

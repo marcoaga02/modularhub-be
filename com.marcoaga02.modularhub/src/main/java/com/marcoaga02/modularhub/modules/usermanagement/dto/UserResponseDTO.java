@@ -1,8 +1,13 @@
 package com.marcoaga02.modularhub.modules.usermanagement.dto;
 
+import com.marcoaga02.modularhub.shared.dto.AuditDTO;
+import com.marcoaga02.modularhub.shared.dto.IdentityGroupDTO;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -27,6 +32,10 @@ public class UserResponseDTO {
 
     private Boolean enabled;
 
-    // TODO aggiungere altri campi dopo keycloak e anche Audit
+    private String username;
+
+    private Set<IdentityGroupDTO> groups = new HashSet<>();
+
+    private AuditDTO audit;
 
 }
