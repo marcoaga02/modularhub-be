@@ -1,9 +1,9 @@
 package com.marcoaga02.modularhub.modules.usermanagement.service;
 
 import com.marcoaga02.modularhub.modules.usermanagement.dto.LanguageResponseDTO;
-import com.marcoaga02.modularhub.modules.usermanagement.mapper.LanguageMapper;
-import com.marcoaga02.modularhub.modules.usermanagement.model.Language;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
+import com.marcoaga02.modularhub.shared.mapper.LanguageMapper;
+import com.marcoaga02.modularhub.shared.model.Language;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

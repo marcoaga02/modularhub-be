@@ -1,31 +1,27 @@
-package com.marcoaga02.modularhub.modules.usermanagement.model;
+package com.marcoaga02.modularhub.shared.model;
 
 import com.marcoaga02.modularhub.shared.domain.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "languages")
-public class Language extends BaseEntity {
+@Table(name = "user_preferences")
+public class AccountPreferences extends BaseEntity {
+
+    @Column(name = "identity_id")
+    private String identityId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "language_id")
+    private Language language;
 
     @Override
     protected Class<? extends BaseEntity> getEntityClass() {
-        return Language.class;
+        return AccountPreferences.class;
     }
-
-    @Column(name = "code")
-    private String code;
-
-    @Column(name = "label")
-    private String label;
-
-    @Column(name = "is_default")
-    private Boolean isDefault;
 
     @Override
     public boolean equals(Object obj) {

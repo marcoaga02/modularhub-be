@@ -3,9 +3,10 @@ package com.marcoaga02.modularhub.shared.service;
 import com.marcoaga02.modularhub.shared.constant.SecurityConstants;
 import com.marcoaga02.modularhub.shared.domain.CurrentAccount;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,12 +24,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ExtendWith(MockitoExtension.class)
 class CurrentAccountServiceTest {
 
-    private CurrentAccountService currentAccountService;
+    @Mock
+    private AccountPreferencesService accountPreferencesService;
 
-    @BeforeEach
-    void setUp() {
-        currentAccountService = new CurrentAccountService();
-    }
+    @InjectMocks
+    private CurrentAccountService currentAccountService;
 
     private void mockAuthentication(Map<String, Object> claims, List<String> roles) {
         Map<String, Object> headers = Map.of("alg", "RS256");

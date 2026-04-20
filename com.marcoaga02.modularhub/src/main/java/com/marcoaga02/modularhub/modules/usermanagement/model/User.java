@@ -28,10 +28,6 @@ public class User extends AuditableEntity {
     @JdbcTypeCode(SqlTypes.VARCHAR)
     private Gender gender;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "language_id")
-    private Language language;
-
     @Column(name = "mobile_number")
     private String mobileNumber;
 

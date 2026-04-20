@@ -6,14 +6,18 @@ import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Gender;
-import com.marcoaga02.modularhub.modules.usermanagement.model.Language;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
 import com.marcoaga02.modularhub.shared.domain.CurrentAccount;
+import com.marcoaga02.modularhub.shared.dto.AccountPreferencesResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
 import com.marcoaga02.modularhub.shared.exception.BadRequestException;
 import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.model.AccountPreferences;
+import com.marcoaga02.modularhub.shared.model.Language;
+import com.marcoaga02.modularhub.shared.repository.AccountPreferencesRepository;
+import com.marcoaga02.modularhub.shared.service.AccountPreferencesService;
 import com.marcoaga02.modularhub.shared.service.CurrentAccountService;
 import com.marcoaga02.modularhub.shared.service.IdentityService;
 import jakarta.persistence.EntityManager;
@@ -51,10 +55,16 @@ class UserServiceIT extends BaseITClass {
     private UserService userService;
 
     @Autowired
+    private AccountPreferencesService accountPreferencesService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private LanguageRepository languageRepository;
+
+    @Autowired
+    private AccountPreferencesRepository accountPreferencesRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -69,7 +79,8 @@ class UserServiceIT extends BaseITClass {
                 "current-id",
                 "current@email.com",
                 "current.username",
-                Set.of()
+                Set.of(),
+                new AccountPreferencesResponseDTO()
         );
 
         when(currentAccountService.getCurrentAccount())
@@ -79,10 +90,10 @@ class UserServiceIT extends BaseITClass {
         lang2 = createLanguage("en-US", "English", false);
 
         enabledUser = createUser(
+                "identity1",
                 "firstname1",
                 "lastname1",
                 Gender.M,
-                lang1,
                 "0000",
                 TAX_ID_NUMBER,
                 "enabled@email.com",
@@ -91,10 +102,10 @@ class UserServiceIT extends BaseITClass {
         );
 
         disabledUser = createUser(
+                "identity2",
                 "firstname2",
                 "lastname2",
                 Gender.F,
-                lang2,
                 "1111",
                 "USR_2",
                 "disabled@email.com",
@@ -103,10 +114,10 @@ class UserServiceIT extends BaseITClass {
         );
 
         anotherUser = createUser(
+                "identity3",
                 "firstname3",
                 "lastname3",
                 Gender.F,
-                lang2,
                 "2222",
                 "USR_3",
                 "another@email.com",
@@ -115,10 +126,10 @@ class UserServiceIT extends BaseITClass {
         );
 
         User deletedUser = createUser(
+                "identity4",
                 "firstname4",
                 "lastname4",
                 Gender.M,
-                lang2,
                 "3333",
                 "USR_4",
                 "deleted@email.com",
@@ -126,6 +137,10 @@ class UserServiceIT extends BaseITClass {
                 true
         );
         deletedUser.setDeletedOn(OffsetDateTime.now());
+
+        createAccountPreferences("identity1", lang1);
+        createAccountPreferences("identity2", lang2);
+        createAccountPreferences("identity3", lang2);
 
         entityManager.flush();
         entityManager.clear();
@@ -495,21 +510,22 @@ class UserServiceIT extends BaseITClass {
                 .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
     }
 
-    private User createUser(String firstname,
-                            String lastname,
-                            Gender gender,
-                            Language language,
-                            String mobileNumber,
-                            String taxIdNumber,
-                            String email,
-                            String username,
-                            Boolean enabled
+    private User createUser(
+            String identityId,
+            String firstname,
+            String lastname,
+            Gender gender,
+            String mobileNumber,
+            String taxIdNumber,
+            String email,
+            String username,
+            Boolean enabled
     ) {
         User user = new User();
+        user.setIdentityId(identityId);
         user.setFirstname(firstname);
         user.setLastname(lastname);
         user.setGender(gender);
-        user.setLanguage(language);
         user.setMobileNumber(mobileNumber);
         user.setTaxIdNumber(taxIdNumber);
         user.setEmail(email);
@@ -545,6 +561,18 @@ class UserServiceIT extends BaseITClass {
         dto.setPassword("newpassword");
         dto.setEnabled(false);
         return dto;
+    }
+
+    private void createAccountPreferences(
+            String identityId,
+            Language language
+    ) {
+        AccountPreferences preferences = new AccountPreferences();
+        preferences.setIdentityId(identityId);
+        preferences.setLanguage(language);
+
+        accountPreferencesRepository.save(preferences);
+
     }
 
 }

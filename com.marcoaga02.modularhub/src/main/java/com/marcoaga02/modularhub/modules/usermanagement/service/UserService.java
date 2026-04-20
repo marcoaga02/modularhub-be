@@ -4,16 +4,15 @@ import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.mapper.UserMapper;
-import com.marcoaga02.modularhub.modules.usermanagement.model.Language;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.specification.UserSpecificationComposer;
-import com.marcoaga02.modularhub.shared.dto.IdentityUserCreateRequestDTO;
-import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
-import com.marcoaga02.modularhub.shared.dto.IdentityUserUpdateRequestDTO;
+import com.marcoaga02.modularhub.shared.dto.*;
 import com.marcoaga02.modularhub.shared.exception.BadRequestException;
 import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.model.Language;
+import com.marcoaga02.modularhub.shared.service.AccountPreferencesService;
 import com.marcoaga02.modularhub.shared.service.CurrentAccountService;
 import com.marcoaga02.modularhub.shared.service.IdentityService;
 import org.springframework.data.domain.Page;
@@ -42,13 +41,17 @@ public class UserService {
 
     private final CurrentAccountService  currentAccountService;
 
-    public UserService(UserRepository userRepository, LanguageRepository languageRepository, UserMapper userMapper, UserSpecificationComposer userSpecComposer, IdentityService identityService, CurrentAccountService currentAccountService) {
+    // TODO aggiornare test
+    private final AccountPreferencesService accountPreferencesService;
+
+    public UserService(UserRepository userRepository, LanguageRepository languageRepository, UserMapper userMapper, UserSpecificationComposer userSpecComposer, IdentityService identityService, CurrentAccountService currentAccountService, AccountPreferencesService accountPreferencesService) {
         this.userRepository = userRepository;
         this.languageRepository = languageRepository;
         this.userMapper = userMapper;
         this.userSpecComposer = userSpecComposer;
         this.identityService = identityService;
         this.currentAccountService = currentAccountService;
+        this.accountPreferencesService = accountPreferencesService;
     }
 
     public Page<UserResponseDTO> getAllUsers(UserCriteriaDTO criteria, Pageable pageable) {
@@ -71,6 +74,10 @@ public class UserService {
         if (userResponseDTO.getGroups() != null) {
             dto.setGroups(new HashSet<>(userResponseDTO.getGroups()));
         }
+
+        AccountPreferencesResponseDTO preferencesDTO = accountPreferencesService.getAccountPreferences(user.getIdentityId());
+
+        dto.setLanguage(preferencesDTO.getLanguage());
         
         return dto;
     }
@@ -103,7 +110,18 @@ public class UserService {
         String identityId = identityService.createUser(userRequestDTO);
         user.setIdentityId(identityId);
 
-        return userMapper.toDto(userRepository.save(user));
+        AccountPreferencesCreateDTO preferencesRequestDTO = new AccountPreferencesCreateDTO(
+                identityId,
+                dto.getLanguageId()
+        );
+
+        AccountPreferencesResponseDTO preferencesResponseDTO =
+                accountPreferencesService.createAccountPreferences(preferencesRequestDTO);
+
+        UserResponseDTO userResponseDTO = userMapper.toDto(userRepository.save(user));
+        userResponseDTO.setLanguage(preferencesResponseDTO.getLanguage());
+
+        return userResponseDTO;
     }
 
     @Transactional
@@ -134,11 +152,22 @@ public class UserService {
 
         identityService.updateUser(user.getIdentityId(), userRequestDTO);
 
-        return userMapper.toDto(userRepository.save(user));
+        AccountPreferencesUpdateDTO preferencesRequestDTO = new AccountPreferencesUpdateDTO(
+                dto.getLanguageId()
+        );
+
+        AccountPreferencesResponseDTO preferencesResponseDTO =
+                accountPreferencesService.updateAccountPreferencesByIdentityId(user.getIdentityId(), preferencesRequestDTO);
+
+        UserResponseDTO userResponseDTO = userMapper.toDto(user);
+        userResponseDTO.setLanguage(preferencesResponseDTO.getLanguage());
+
+        return userResponseDTO;
     }
 
     @Transactional
     public void deleteUser(String uuid) {
+        // TODO fare delete delle user preferences
         User user = userRepository.findByUuidAndDeletedOnIsNull(uuid)
                 .orElseThrow(() -> new NotFoundException(String.format("User with uuid '%s' not found", uuid)));
 

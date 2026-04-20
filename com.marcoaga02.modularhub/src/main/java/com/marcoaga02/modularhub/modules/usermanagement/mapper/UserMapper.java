@@ -8,10 +8,11 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(componentModel = "spring", uses = {LanguageMapper.class})
+@Mapper(componentModel = "spring")
 public interface UserMapper {
 
     @Mapping(target = "groups", ignore = true)
+    @Mapping(target = "language", ignore = true)
     @Mapping(target = "audit", expression = "java(mapAudit(user))")
     @Mapping(source = "uuid", target = "id")
     UserResponseDTO toDto(User user);
@@ -23,9 +24,9 @@ public interface UserMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "deletedBy", ignore = true)
     @Mapping(target = "identityId", ignore = true)
-    @Mapping(source = "languageId", target = "language")
     User updateEntity(UserRequestDTO dto, @MappingTarget User user);
 
+    // TODO aggiornare mapping in modo da mettere fullname dell'utente che ha creato/aggiornato, non il suo identityId
     default AuditDTO mapAudit(User user) {
         AuditDTO dto = new AuditDTO();
         dto.setCreatedBy(user.getCreatedBy());

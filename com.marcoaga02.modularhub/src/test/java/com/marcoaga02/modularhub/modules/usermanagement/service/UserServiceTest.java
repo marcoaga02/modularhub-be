@@ -6,18 +6,16 @@ import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.mapper.UserMapper;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Gender;
-import com.marcoaga02.modularhub.modules.usermanagement.model.Language;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.specification.UserSpecificationComposer;
 import com.marcoaga02.modularhub.shared.domain.CurrentAccount;
-import com.marcoaga02.modularhub.shared.dto.IdentityGroupDTO;
-import com.marcoaga02.modularhub.shared.dto.IdentityUserCreateRequestDTO;
-import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
-import com.marcoaga02.modularhub.shared.dto.IdentityUserUpdateRequestDTO;
+import com.marcoaga02.modularhub.shared.dto.*;
 import com.marcoaga02.modularhub.shared.exception.BadRequestException;
 import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.model.Language;
+import com.marcoaga02.modularhub.shared.service.AccountPreferencesService;
 import com.marcoaga02.modularhub.shared.service.CurrentAccountService;
 import com.marcoaga02.modularhub.shared.service.IdentityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,13 +54,16 @@ class UserServiceTest {
     private UserMapper userMapper;
 
     @Mock
-    private UserSpecificationComposer  userSpecComposer;
+    private UserSpecificationComposer userSpecComposer;
 
     @Mock
     private IdentityService identityService;
 
     @Mock
     private CurrentAccountService currentAccountService;
+
+    @Mock
+    private AccountPreferencesService accountPreferencesService;
 
     @InjectMocks
     private UserService userService;
@@ -73,6 +74,8 @@ class UserServiceTest {
 
     private Language language;
 
+    private LanguageResponseDTO languageResponseDTO;
+
     @BeforeEach
     void setUp() {
         language = new Language();
@@ -80,7 +83,7 @@ class UserServiceTest {
         language.setLabel("Italiano");
         language.setIsDefault(true);
 
-        LanguageResponseDTO languageResponseDTO = new LanguageResponseDTO();
+        languageResponseDTO = new LanguageResponseDTO();
         languageResponseDTO.setId(language.getUuid());
         languageResponseDTO.setCode("it-IT");
         languageResponseDTO.setLabel("Italiano");
@@ -90,7 +93,6 @@ class UserServiceTest {
         user1.setFirstname("Mario");
         user1.setLastname("Rossi");
         user1.setGender(Gender.M);
-        user1.setLanguage(language);
         user1.setMobileNumber("0000");
         user1.setTaxIdNumber("TAX_ID_01");
         user1.setEmail("email@mock.it");
@@ -113,7 +115,6 @@ class UserServiceTest {
         user2.setFirstname("Vittoria");
         user2.setLastname("Bianchi");
         user2.setGender(Gender.F);
-        user2.setLanguage(language);
         user2.setMobileNumber("1111");
         user2.setTaxIdNumber("TAX_ID_02");
         user2.setEmail("vittoria@mock.it");
@@ -215,12 +216,17 @@ class UserServiceTest {
         userResponseDTO.setEnabled(true);
         userResponseDTO.setGroups(List.of(groupDTO));
 
+        AccountPreferencesResponseDTO preferencesResponseDTO = new AccountPreferencesResponseDTO();
+        preferencesResponseDTO.setLanguage(languageResponseDTO);
+
         when(userRepository.findByUuidAndDeletedOnIsNull(userUuid))
                 .thenReturn(Optional.of(user1));
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
         when(identityService.getUserById(identityId))
                 .thenReturn(userResponseDTO);
+        when(accountPreferencesService.getAccountPreferences(identityId))
+                .thenReturn(preferencesResponseDTO);
 
         UserResponseDTO result = userService.getUserByUuid(userUuid);
 
@@ -228,6 +234,7 @@ class UserServiceTest {
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(userUuid);
         verify(identityService).getUserById(identityId);
+        verify(accountPreferencesService).getAccountPreferences(identityId);
         verify(userMapper).toDto(user1);
     }
 
@@ -251,12 +258,17 @@ class UserServiceTest {
         userResponseDTO.setEnabled(true);
         userResponseDTO.setGroups(null);
 
+        AccountPreferencesResponseDTO preferencesResponseDTO = new AccountPreferencesResponseDTO();
+        preferencesResponseDTO.setLanguage(languageResponseDTO);
+
         when(userRepository.findByUuidAndDeletedOnIsNull(userUuid))
                 .thenReturn(Optional.of(user1));
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
         when(identityService.getUserById(identityId))
                 .thenReturn(userResponseDTO);
+        when(accountPreferencesService.getAccountPreferences(identityId))
+                .thenReturn(preferencesResponseDTO);
 
         UserResponseDTO result = userService.getUserByUuid(userUuid);
 
@@ -264,9 +276,9 @@ class UserServiceTest {
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(userUuid);
         verify(identityService).getUserById(identityId);
+        verify(accountPreferencesService).getAccountPreferences(identityId);
         verify(userMapper).toDto(user1);
     }
-
 
     @Test
     void testGetUserByUuidWhenUserNotFoundShouldThrowNotFoundException() {
@@ -287,6 +299,9 @@ class UserServiceTest {
 
         UserRequestDTO dto = buildUserRequestDTO();
 
+        AccountPreferencesResponseDTO preferencesResponseDTO = new AccountPreferencesResponseDTO();
+        preferencesResponseDTO.setLanguage(languageResponseDTO);
+
         when(languageRepository.findByUuid("LANG_ID_01"))
                 .thenReturn(language);
         when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW"))
@@ -297,6 +312,8 @@ class UserServiceTest {
                 .thenReturn(userResponseDTO1);
         when(identityService.createUser(any(IdentityUserCreateRequestDTO.class)))
                 .thenReturn(identityId);
+        when(accountPreferencesService.createAccountPreferences(any(AccountPreferencesCreateDTO.class)))
+                .thenReturn(preferencesResponseDTO);
 
         UserResponseDTO result = userService.createUser(dto);
 
@@ -305,12 +322,12 @@ class UserServiceTest {
         verify(languageRepository).findByUuid("LANG_ID_01");
         verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW");
 
-        ArgumentCaptor<IdentityUserCreateRequestDTO> captor =
+        ArgumentCaptor<IdentityUserCreateRequestDTO> identityCaptor =
                 ArgumentCaptor.forClass(IdentityUserCreateRequestDTO.class);
 
-        verify(identityService).createUser(captor.capture());
+        verify(identityService).createUser(identityCaptor.capture());
 
-        IdentityUserCreateRequestDTO captured = captor.getValue();
+        IdentityUserCreateRequestDTO captured = identityCaptor.getValue();
 
         assertThat(captured.getUsername()).isEqualTo("new username");
         assertThat(captured.getEmail()).isEqualTo("new@email.com");
@@ -320,6 +337,16 @@ class UserServiceTest {
         assertThat(captured.getPassword()).isEqualTo("password");
         assertThat(captured.getGroupIds()).containsExactly("group-id");
         assertThat(captured.getEmailVerified()).isTrue();
+
+        ArgumentCaptor<AccountPreferencesCreateDTO> preferencesCaptor =
+                ArgumentCaptor.forClass(AccountPreferencesCreateDTO.class);
+
+        verify(accountPreferencesService).createAccountPreferences(preferencesCaptor.capture());
+
+        AccountPreferencesCreateDTO preferencesCaptured = preferencesCaptor.getValue();
+
+        assertThat(preferencesCaptured.getIdentityId()).isEqualTo(identityId);
+        assertThat(preferencesCaptured.getLanguageId()).isEqualTo("LANG_ID_01");
 
         verify(userMapper).toDto(user1);
 
@@ -381,14 +408,19 @@ class UserServiceTest {
         UserRequestDTO dto = buildUserRequestDTO();
         dto.setTaxIdNumber(user1.getTaxIdNumber());
 
+        AccountPreferencesResponseDTO preferencesResponseDTO = new AccountPreferencesResponseDTO();
+        preferencesResponseDTO.setLanguage(languageResponseDTO);
+
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
         when(languageRepository.findByUuid("LANG_ID_01"))
                 .thenReturn(language);
-        when(userRepository.save(user1))
-                .thenReturn(user1);
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
+        when(accountPreferencesService.updateAccountPreferencesByIdentityId(
+                eq(identityId),
+                any(AccountPreferencesUpdateDTO.class)
+        )).thenReturn(preferencesResponseDTO);
 
         UserResponseDTO result = userService.updateUser(user1.getUuid(), dto);
 
@@ -413,7 +445,18 @@ class UserServiceTest {
         assertThat(captured.getEnabled()).isFalse();
         assertThat(captured.getGroupIds()).containsExactly("group-id");
 
-        verify(userRepository).save(user1);
+        ArgumentCaptor<AccountPreferencesUpdateDTO> preferencesCaptor =
+                ArgumentCaptor.forClass(AccountPreferencesUpdateDTO.class);
+
+        verify(accountPreferencesService).updateAccountPreferencesByIdentityId(
+                eq(identityId),
+                preferencesCaptor.capture()
+        );
+
+        AccountPreferencesUpdateDTO preferencesCaptured = preferencesCaptor.getValue();
+
+        assertThat(preferencesCaptured.getLanguageId()).isEqualTo("LANG_ID_01");
+
         verify(userMapper).toDto(user1);
     }
 
@@ -433,7 +476,6 @@ class UserServiceTest {
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper, never()).updateEntity(any(), any());
         verify(identityService, never()).updateUser(any(), any());
-        verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
 
@@ -456,7 +498,6 @@ class UserServiceTest {
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper, never()).updateEntity(any(), any());
         verify(identityService, never()).updateUser(any(), any());
-        verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
 
@@ -481,7 +522,6 @@ class UserServiceTest {
         verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_02");
         verify(userMapper, never()).updateEntity(any(), any());
         verify(identityService, never()).updateUser(any(), any());
-        verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
 
@@ -493,16 +533,21 @@ class UserServiceTest {
         UserRequestDTO dto = buildUserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_NEW");
 
+        AccountPreferencesResponseDTO preferencesResponseDTO = new AccountPreferencesResponseDTO();
+        preferencesResponseDTO.setLanguage(languageResponseDTO);
+
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
         when(languageRepository.findByUuid("LANG_ID_01"))
                 .thenReturn(language);
         when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW"))
                 .thenReturn(Optional.empty());
-        when(userRepository.save(user1))
-                .thenReturn(user1);
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
+        when(accountPreferencesService.updateAccountPreferencesByIdentityId(
+                eq(identityId),
+                any(AccountPreferencesUpdateDTO.class)
+        )).thenReturn(preferencesResponseDTO);
 
         UserResponseDTO result = userService.updateUser(user1.getUuid(), dto);
 
@@ -527,7 +572,18 @@ class UserServiceTest {
         assertThat(captured.getEnabled()).isFalse();
         assertThat(captured.getGroupIds()).containsExactly("group-id");
 
-        verify(userRepository).save(user1);
+        ArgumentCaptor<AccountPreferencesUpdateDTO> preferencesCaptor =
+                ArgumentCaptor.forClass(AccountPreferencesUpdateDTO.class);
+
+        verify(accountPreferencesService).updateAccountPreferencesByIdentityId(
+                eq(identityId),
+                preferencesCaptor.capture()
+        );
+
+        AccountPreferencesUpdateDTO preferencesCaptured = preferencesCaptor.getValue();
+
+        assertThat(preferencesCaptured.getLanguageId()).isEqualTo("LANG_ID_01");
+
         verify(userMapper).toDto(user1);
     }
 
@@ -537,7 +593,8 @@ class UserServiceTest {
                 "keycloakId",
                 "user@email.com",
                 "username",
-                Set.of()
+                Set.of(),
+                new AccountPreferencesResponseDTO()
         );
 
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))

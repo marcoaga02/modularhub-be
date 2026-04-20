@@ -1,6 +1,6 @@
 package com.marcoaga02.modularhub.modules.usermanagement.repository;
 
-import com.marcoaga02.modularhub.modules.usermanagement.model.Language;
+import com.marcoaga02.modularhub.shared.model.Language;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

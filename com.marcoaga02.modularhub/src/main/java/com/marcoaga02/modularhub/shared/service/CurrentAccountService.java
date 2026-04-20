@@ -3,6 +3,7 @@ package com.marcoaga02.modularhub.shared.service;
 import com.marcoaga02.modularhub.shared.constant.KeycloakClaims;
 import com.marcoaga02.modularhub.shared.constant.SecurityConstants;
 import com.marcoaga02.modularhub.shared.domain.CurrentAccount;
+import com.marcoaga02.modularhub.shared.dto.AccountPreferencesResponseDTO;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,21 +21,33 @@ import java.util.stream.Collectors;
 @RequestScope
 public class CurrentAccountService {
 
+    private final AccountPreferencesService accountPreferencesService;
+
+    public CurrentAccountService(AccountPreferencesService accountPreferencesService) {
+        this.accountPreferencesService = accountPreferencesService;
+    }
+
     private JwtAuthenticationToken getJwtAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             return jwtAuth;
         }
+
         throw new IllegalStateException("No JWT authentication found in security context");
     }
 
     public CurrentAccount getCurrentAccount() {
         Jwt jwt = getJwtAuthentication().getToken();
+        String identityId = jwt.getSubject();
+
+        AccountPreferencesResponseDTO accountPreferencesResponseDTO = accountPreferencesService.getAccountPreferences(identityId);
+
         return new CurrentAccount(
-                jwt.getSubject(),
+                identityId,
                 jwt.getClaimAsString(KeycloakClaims.EMAIL),
                 jwt.getClaimAsString(KeycloakClaims.USERNAME),
-                getRoles()
+                getRoles(),
+                accountPreferencesResponseDTO
         );
     }
 
