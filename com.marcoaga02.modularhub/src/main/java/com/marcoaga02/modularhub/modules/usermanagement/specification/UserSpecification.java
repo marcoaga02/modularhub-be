@@ -2,7 +2,6 @@ package com.marcoaga02.modularhub.modules.usermanagement.specification;
 
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 

@@ -1,6 +1,5 @@
 package com.marcoaga02.modularhub.modules.usermanagement.service;
 
-import com.marcoaga02.modularhub.shared.dto.LanguageResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;

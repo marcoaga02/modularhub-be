@@ -1,9 +1,9 @@
 package com.marcoaga02.modularhub.shared.service;
 
-import com.marcoaga02.modularhub.shared.dto.LanguageResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesCreateDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesUpdateDTO;
+import com.marcoaga02.modularhub.shared.dto.LanguageResponseDTO;
 import com.marcoaga02.modularhub.shared.exception.NotFoundException;
 import com.marcoaga02.modularhub.shared.mapper.AccountPreferencesMapper;
 import com.marcoaga02.modularhub.shared.model.AccountPreferences;
