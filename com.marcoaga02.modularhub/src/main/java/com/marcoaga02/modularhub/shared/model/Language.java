@@ -1,6 +1,5 @@
 package com.marcoaga02.modularhub.shared.model;
 
-import com.marcoaga02.modularhub.shared.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

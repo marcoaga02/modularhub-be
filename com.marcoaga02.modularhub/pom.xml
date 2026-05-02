@@ -20,6 +20,7 @@
         <assertj.version>3.27.7</assertj.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <testcontainers.version>1.21.4</testcontainers.version>
+        <keycloak-testcontainers.version>4.2.1</keycloak-testcontainers.version>
         <pitest.version>1.23.0</pitest.version>
         <pitest-junit5.version>1.2.3</pitest-junit5.version>
         <jacoco.version>0.8.14</jacoco.version>
@@ -127,6 +128,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
@@ -134,6 +140,18 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.dasniko</groupId>
+            <artifactId>testcontainers-keycloak</artifactId>
+            <version>${keycloak-testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -146,12 +164,6 @@
             <artifactId>mapstruct-processor</artifactId>
             <version>${mapstruct.version}</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>${assertj.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -171,12 +183,8 @@
                         <excludes>
                             <exclude>**/dto/*.*</exclude>
                             <exclude>**/model/*.*</exclude>
-                            <exclude>**/provider/*.*</exclude>
-                            <exclude>**/repository/*.*</exclude>
                             <exclude>**/config/*.*</exclude>
-                            <exclude>**/property/*.*</exclude>
                             <exclude>**/constant/*.*</exclude>
-                            <exclude>**/domain/*.*</exclude>
                             <exclude>**/ModularhubApplication.*</exclude>
                         </excludes>
                     </configuration>
@@ -195,7 +203,7 @@
                             <configuration>
                                 <rules>
                                     <rule>
-                                        <element>PACKAGE</element>
+                                        <element>BUNDLE</element>
                                         <limits>
                                             <limit>
                                                 <counter>LINE</counter>
@@ -239,18 +247,14 @@
                             <mutator>DEFAULTS</mutator>
                         </mutators>
                         <excludedClasses>
-                            <param>com.marcoaga02.modularhub.shared.domain.*</param>
-                            <param>com.marcoaga02.modularhub.shared.dto.*</param>
                             <param>com.marcoaga02.modularhub.shared.constant.*</param>
                             <param>com.marcoaga02.modularhub.shared.validation.*</param>
                             <param>com.marcoaga02.modularhub.shared.config.*</param>
-                            <param>com.marcoaga02.modularhub.shared.property.*</param>
                             <param>com.marcoaga02.modularhub.shared.exception.*</param>
-                            <param>com.marcoaga02.modularhub.shared.provider.*</param>
                             <param>com.marcoaga02.modularhub.ModularhubApplication</param>
                             <param>com.marcoaga02.modularhub.*.model.*</param>
                             <param>com.marcoaga02.modularhub.*.dto.*</param>
-                            <param>com.marcoaga02.modularhub.*.repository.*</param>
+                            <param>com.marcoaga02.modularhub.shared.service.KeycloakIdentityProviderService</param>
                         </excludedClasses>
                         <mutationThreshold>80</mutationThreshold>
                     </configuration>

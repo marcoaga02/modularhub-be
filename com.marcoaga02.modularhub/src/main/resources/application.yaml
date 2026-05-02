@@ -42,5 +42,7 @@ cors:
     - DELETE
     - OPTIONS
   allowed-headers:
-    - "*"
+    - Authorization
+    - Content-Type
+    - Accept
   allow-credentials: true

@@ -1,6 +1,5 @@
 package com.marcoaga02.modularhub.shared.model;
 
-import com.marcoaga02.modularhub.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +13,7 @@ public class AccountPreferences extends BaseEntity {
     @Column(name = "identity_id")
     private String identityId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "language_id")
     private Language language;
 

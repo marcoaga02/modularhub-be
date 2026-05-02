@@ -1,15 +1,13 @@
 package com.marcoaga02.modularhub.modules.usermanagement.service;
 
 import com.marcoaga02.modularhub.ModularhubApplication;
-import com.marcoaga02.modularhub.config.BaseITClass;
-import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
+import com.marcoaga02.modularhub.config.BaseITWithMockIdentity;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Gender;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
-import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
-import com.marcoaga02.modularhub.shared.domain.CurrentAccount;
+import com.marcoaga02.modularhub.shared.dto.AccountDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
 import com.marcoaga02.modularhub.shared.exception.BadRequestException;
@@ -17,8 +15,9 @@ import com.marcoaga02.modularhub.shared.exception.NotFoundException;
 import com.marcoaga02.modularhub.shared.model.AccountPreferences;
 import com.marcoaga02.modularhub.shared.model.Language;
 import com.marcoaga02.modularhub.shared.repository.AccountPreferencesRepository;
+import com.marcoaga02.modularhub.shared.repository.LanguageRepository;
 import com.marcoaga02.modularhub.shared.service.AccountPreferencesService;
-import com.marcoaga02.modularhub.shared.service.CurrentAccountService;
+import com.marcoaga02.modularhub.shared.service.AccountService;
 import com.marcoaga02.modularhub.shared.service.IdentityService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,15 +40,15 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = ModularhubApplication.class)
 @Transactional
-class UserServiceIT extends BaseITClass {
+class UserServiceIT extends BaseITWithMockIdentity {
 
-    public static final String TAX_ID_NUMBER = "USR_1";
+    private static final String TAX_ID_NUMBER = "USR_1";
 
     @MockitoBean
     private IdentityService identityService;
 
     @MockitoBean
-    private CurrentAccountService currentAccountService;
+    private AccountService accountService;
 
     @Autowired
     private UserService userService;
@@ -75,21 +74,23 @@ class UserServiceIT extends BaseITClass {
 
     @BeforeEach
     void setUp() {
-        CurrentAccount currentAccount = new CurrentAccount(
+        AccountDTO currentAccount = new AccountDTO(
                 "current-id",
                 "current@email.com",
                 "current.username",
+                "currentFirstName",
+                "currentLastName",
                 Set.of(),
                 new AccountPreferencesResponseDTO()
         );
 
-        when(currentAccountService.getCurrentAccount())
+        when(accountService.getCurrentAccount())
                 .thenReturn(currentAccount);
 
-        lang1 = createLanguage("it-IT", "Italiano", true);
-        lang2 = createLanguage("en-US", "English", false);
+        lang1 = createAndSaveLanguage("it-IT", "Italiano", true);
+        lang2 = createAndSaveLanguage("en-US", "English", false);
 
-        enabledUser = createUser(
+        enabledUser = createAndSaveUser(
                 "identity1",
                 "firstname1",
                 "lastname1",
@@ -98,10 +99,11 @@ class UserServiceIT extends BaseITClass {
                 TAX_ID_NUMBER,
                 "enabled@email.com",
                 "username1",
-                true
+                true,
+                null
         );
 
-        disabledUser = createUser(
+        disabledUser = createAndSaveUser(
                 "identity2",
                 "firstname2",
                 "lastname2",
@@ -110,10 +112,11 @@ class UserServiceIT extends BaseITClass {
                 "USR_2",
                 "disabled@email.com",
                 "username2",
-                false
+                false,
+                null
         );
 
-        anotherUser = createUser(
+        anotherUser = createAndSaveUser(
                 "identity3",
                 "firstname3",
                 "lastname3",
@@ -122,10 +125,12 @@ class UserServiceIT extends BaseITClass {
                 "USR_3",
                 "another@email.com",
                 "username3",
-                true
+                true,
+                null
         );
 
-        User deletedUser = createUser(
+        // deleted user
+        createAndSaveUser(
                 "identity4",
                 "firstname4",
                 "lastname4",
@@ -134,20 +139,20 @@ class UserServiceIT extends BaseITClass {
                 "USR_4",
                 "deleted@email.com",
                 "username4",
-                true
+                true,
+                OffsetDateTime.now()
         );
-        deletedUser.setDeletedOn(OffsetDateTime.now());
 
-        createAccountPreferences("identity1", lang1);
-        createAccountPreferences("identity2", lang2);
-        createAccountPreferences("identity3", lang2);
+        createAndSaveAccountPreferences("identity1", lang1);
+        createAndSaveAccountPreferences("identity2", lang2);
+        createAndSaveAccountPreferences("identity3", lang2);
 
         entityManager.flush();
         entityManager.clear();
     }
 
     @Test
-    void testGetAllUsers() {
+    void getAllUsers_shouldReturnAllUsers_whenCriteriaIsNull() {
         Page<UserResponseDTO> result = userService.getAllUsers(
                 null,
                 PageRequest.of(0, 10)
@@ -168,7 +173,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testGetAllUsersWhenPageSizeIsOneShouldReturnOnlyOneUser() {
+    void getAllUsers_shouldReturnOnlyOneUser_whenPageSizeIsOne() {
         Page<UserResponseDTO> result = userService.getAllUsers(
                 null,
                 PageRequest.of(0, 1, Sort.by("firstname").ascending())
@@ -188,7 +193,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testGetAllUsersWhenPageSizeIsTwoShouldReturnTwoUser() {
+    void getAllUsers_shouldReturnTwoUsers_whenPageSizeIsTwo() {
         Page<UserResponseDTO> result = userService.getAllUsers(
                 null,
                 PageRequest.of(0, 2, Sort.by("firstname").ascending())
@@ -209,7 +214,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testGetAllUsersWhenSecondPageShouldReturnCorrectUsers() {
+    void getAllUsers_shouldReturnCorrectUsers_whenPageNumberRefersToTheSecondPage() {
         Page<UserResponseDTO> result = userService.getAllUsers(
                 null,
                 PageRequest.of(1, 2, Sort.by("firstname").ascending())
@@ -227,154 +232,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testGetAllUsersWhenFilterByTextShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("firstname1");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(
-                criteria,
-                PageRequest.of(0, 10)
-        );
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(enabledUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByTextMatchesLastnameShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("lastname2");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(disabledUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByTextMatchesEmailShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("another@email.com");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(anotherUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByFirstnameCaseInsensitiveShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("FIRSTNAME1");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(enabledUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByLastnameCaseInsensitiveShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("LASTNAME2");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(disabledUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByEmailCaseInsensitiveShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("ANOTHER@EMAIL.COM");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(anotherUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByPartialFirstnameShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("irstname1");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(enabledUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByPartialLastnameShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("astname2");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(disabledUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByPartialEmailShouldReturnMatchingUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("another");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent())
-                .extracting(UserResponseDTO::getId)
-                .containsExactly(anotherUser.getUuid());
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByTextWithNoMatchShouldReturnEmptyPage() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("nonexistent");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isZero();
-        assertThat(result.getContent()).isEmpty();
-    }
-
-    @Test
-    void testGetAllUsersWhenFilterByEmptyTextShouldReturnAllUsers() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        criteria.setText("");
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, PageRequest.of(0, 10));
-
-        assertThat(result.getTotalElements()).isEqualTo(3);
-    }
-
-    @Test
-    void testGetUserByUuidWhenUserExistsShouldReturnUser() {
+    void getUserByUuid_shouldReturnUser_whenUserExists() {
         when(identityService.getUserById(any()))
                 .thenReturn(new IdentityUserResponseDTO());
 
@@ -385,14 +243,14 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testGetUserByUuidWhenUserNotFoundShouldThrowNotFoundException() {
+    void getUserByUuid_shouldThrowNotFoundException_whenUserNotFound() {
         assertThatThrownBy(() -> userService.getUserByUuid("non-existing-uuid"))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
     }
 
     @Test
-    void testCreateUserWhenTaxIdNumberNotExistsShouldCreateAndReturnDTO() {
+    void createUser_shouldCreateAndReturnDTO_whenTaxIdNumberNotExists() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setFirstname("New firstname");
         dto.setLastname("New lastname");
@@ -412,7 +270,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testCreateUserWhenInvalidLanguageIdShouldThrowBadRequestException() {
+    void createUser_shouldThrowBadRequestException_whenInvalidLanguageId() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setFirstname("New firstname");
         dto.setLastname("New lastname");
@@ -431,7 +289,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testUpdateUserWhenValidShouldUpdateAndReturnDTO() {
+    void updateUser_shouldUpdateAndReturnDTO_whenValidRequest() {
         UserRequestDTO dto = buildUserRequestDTO(lang2.getUuid(), enabledUser.getTaxIdNumber());
 
         UserResponseDTO result = userService.updateUser(enabledUser.getUuid(), dto);
@@ -449,7 +307,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testUpdateUserWhenTaxIdNumberChangedAndNotExistsShouldUpdateAndReturnDTO() {
+    void updateUser_shouldUpdateAndReturnDTO_whenTaxIdNumberChangedAndNotExists() {
         UserRequestDTO dto = buildUserRequestDTO(lang1.getUuid(), "TAX_ID_NEW");
 
         UserResponseDTO result = userService.updateUser(enabledUser.getUuid(), dto);
@@ -460,7 +318,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testUpdateUserWhenUserNotFoundShouldThrowNotFoundException() {
+    void updateUser_shouldThrowNotFoundException_whenUserNotFound() {
         UserRequestDTO dto = buildUserRequestDTO(lang1.getUuid(), "TAX_ID_NEW");
 
         assertThatThrownBy(() -> userService.updateUser("non-existing-uuid", dto))
@@ -469,7 +327,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testUpdateUserWhenInvalidLanguageShouldThrowBadRequestException() {
+    void updateUser_shouldThrowBadRequestException_whenInvalidLanguage() {
         UserRequestDTO dto = buildUserRequestDTO("NON-EXIST-LANG", enabledUser.getTaxIdNumber());
 
         assertThatThrownBy(() -> userService.updateUser(enabledUser.getUuid(), dto))
@@ -478,7 +336,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testUpdateUserWhenTaxIdNumberChangedAndAlreadyExistsShouldThrowBadRequestException() {
+    void updateUser_shouldThrowBadRequestException_whenTaxIdNumberAlreadyExists() {
         UserRequestDTO dto = buildUserRequestDTO(lang1.getUuid(), anotherUser.getTaxIdNumber());
 
         assertThatThrownBy(() -> userService.updateUser(enabledUser.getUuid(), dto))
@@ -487,7 +345,7 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testDeleteUserWhenUserExistsShouldSoftDelete() {
+    void deleteUser_shouldSoftDelete_whenUserExists() {
         User existing = userRepository.findByUuidAndDeletedOnIsNull(enabledUser.getUuid())
                 .orElseThrow();
 
@@ -504,13 +362,13 @@ class UserServiceIT extends BaseITClass {
     }
 
     @Test
-    void testDeleteUserWhenUserNotFoundShouldThrowNotFoundException() {
+    void deleteUser_shouldThrowNotFoundException_whenUserNotFound() {
         assertThatThrownBy(() -> userService.deleteUser("non-existing-uuid"))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
     }
 
-    private User createUser(
+    private User createAndSaveUser(
             String identityId,
             String firstname,
             String lastname,
@@ -519,7 +377,8 @@ class UserServiceIT extends BaseITClass {
             String taxIdNumber,
             String email,
             String username,
-            Boolean enabled
+            Boolean enabled,
+            OffsetDateTime deletedOn
     ) {
         User user = new User();
         user.setIdentityId(identityId);
@@ -531,13 +390,14 @@ class UserServiceIT extends BaseITClass {
         user.setEmail(email);
         user.setUsername(username);
         user.setEnabled(enabled);
+        user.setDeletedOn(deletedOn);
 
         userRepository.save(user);
 
         return user;
     }
 
-    private Language createLanguage(String code, String label, boolean isDefault) {
+    private Language createAndSaveLanguage(String code, String label, boolean isDefault) {
         Language language = new Language();
         language.setCode(code);
         language.setLabel(label);
@@ -563,7 +423,7 @@ class UserServiceIT extends BaseITClass {
         return dto;
     }
 
-    private void createAccountPreferences(
+    private void createAndSaveAccountPreferences(
             String identityId,
             Language language
     ) {

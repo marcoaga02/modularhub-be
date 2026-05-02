@@ -1,8 +1,9 @@
 package com.marcoaga02.modularhub.shared.config;
 
 import com.marcoaga02.modularhub.shared.constant.KeycloakClaims;
+import com.marcoaga02.modularhub.shared.constant.PaginationHeaders;
 import com.marcoaga02.modularhub.shared.constant.SecurityConstants;
-import com.marcoaga02.modularhub.shared.property.CorsProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -15,16 +16,24 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @Profile("!test")
 public class SecurityConfig {
 
-    private final CorsProperties corsProperties;
+    @Value("${cors.allowed-origins}")
+    private List<String> allowedOrigins;
 
-    public SecurityConfig(CorsProperties corsProperties) {
-        this.corsProperties = corsProperties;
-    }
+    @Value("${cors.allowed-methods}")
+    private List<String> allowedMethods;
+
+    @Value("${cors.allowed-headers}")
+    private List<String> allowedHeaders;
+
+    @Value("${cors.allow-credentials}")
+    private boolean allowCredentials;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
@@ -44,10 +53,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(corsProperties.getAllowedOrigins());
-        config.setAllowedMethods(corsProperties.getAllowedMethods());
-        config.setAllowedHeaders(corsProperties.getAllowedHeaders());
-        config.setAllowCredentials(corsProperties.isAllowCredentials());
+        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedMethods(allowedMethods);
+        config.setAllowedHeaders(allowedHeaders);
+        config.setAllowCredentials(allowCredentials);
+
+        config.setExposedHeaders(List.of(
+                PaginationHeaders.TOTAL_COUNT,
+                PaginationHeaders.TOTAL_PAGES,
+                PaginationHeaders.CURRENT_PAGE,
+                PaginationHeaders.PAGE_SIZE
+        ));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

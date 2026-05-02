@@ -1,7 +1,7 @@
 package com.marcoaga02.modularhub.modules.usermanagement.model;
 
-import com.marcoaga02.modularhub.shared.domain.AuditableEntity;
-import com.marcoaga02.modularhub.shared.domain.BaseEntity;
+import com.marcoaga02.modularhub.shared.model.AuditableEntity;
+import com.marcoaga02.modularhub.shared.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -61,5 +61,9 @@ public class User extends AuditableEntity {
     @Override
     public String toString() {
         return super.toString();
+    }
+
+    public String getFullName() {
+        return firstname + " " + lastname;
     }
 }

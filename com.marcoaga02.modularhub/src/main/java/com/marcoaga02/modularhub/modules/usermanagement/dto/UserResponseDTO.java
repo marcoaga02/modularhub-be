@@ -2,6 +2,7 @@ package com.marcoaga02.modularhub.modules.usermanagement.dto;
 
 import com.marcoaga02.modularhub.shared.dto.AuditDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityGroupDTO;
+import com.marcoaga02.modularhub.shared.dto.LanguageResponseDTO;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

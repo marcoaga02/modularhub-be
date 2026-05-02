@@ -19,6 +19,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @Import(UserMapperImpl.class)
 class UserMapperTest {
 
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private UserMapper userMapper;
 
@@ -27,7 +28,7 @@ class UserMapperTest {
     private static final OffsetDateTime DELETED_ON = OffsetDateTime.parse("2026-03-01T10:15:30+01:00");
 
     @Test
-    void testToDtoShouldMapAllFields() {
+    void toDto_shouldMapAllFields_whenIgnoringAudit() {
         User user = buildUser();
 
         UserResponseDTO dto = userMapper.toDto(user);
@@ -41,20 +42,16 @@ class UserMapperTest {
         assertThat(dto.getEmail()).isEqualTo("user@email.com");
         assertThat(dto.getUsername()).isEqualTo("username");
         assertThat(dto.getEnabled()).isTrue();
-        assertThat(dto.getAudit()).isNotNull();
-        assertThat(dto.getAudit().getCreatedOn()).isEqualTo(CREATED_ON);
-        assertThat(dto.getAudit().getUpdatedOn()).isEqualTo(UPDATED_ON);
-        assertThat(dto.getAudit().getCreatedBy()).isEqualTo("user creator");
-        assertThat(dto.getAudit().getUpdatedBy()).isEqualTo("user updater");
+        assertThat(dto.getAudit()).isNull();
     }
 
     @Test
-    void testToDtoWhenInputIsNullShouldReturnNull() {
+    void toDto_shouldReturnNull_whenIgnoringAuditAndInputIsNull() {
         assertThat(userMapper.toDto(null)).isNull();
     }
 
     @Test
-    void updateEntityShouldUpdateAllFields() {
+    void updateEntity_shouldUpdateAllFields() {
         UserRequestDTO dto = buildUserRequestDTO();
         User existing = buildUser();
         String originalUuid = existing.getUuid();
@@ -81,7 +78,7 @@ class UserMapperTest {
     }
 
     @Test
-    void tesUpdateEntityWhenInputDtoIsNullShouldReturnUnmodifiedUser() {
+    void updateEntity_shouldReturnUnmodifiedUser_whenInputDtoIsNull() {
         User existing = buildUser();
         String originalUuid = existing.getUuid();
 

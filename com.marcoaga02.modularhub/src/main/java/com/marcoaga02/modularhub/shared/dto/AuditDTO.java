@@ -1,14 +1,14 @@
 package com.marcoaga02.modularhub.shared.dto;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.OffsetDateTime;
 
 @Getter
 @Setter
 @EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuditDTO {
     private OffsetDateTime createdOn;
     private OffsetDateTime updatedOn;

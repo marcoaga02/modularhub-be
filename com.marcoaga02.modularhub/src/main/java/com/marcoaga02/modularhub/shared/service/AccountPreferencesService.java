@@ -3,14 +3,15 @@ package com.marcoaga02.modularhub.shared.service;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesCreateDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesUpdateDTO;
+import com.marcoaga02.modularhub.shared.exception.BadRequestException;
 import com.marcoaga02.modularhub.shared.exception.NotFoundException;
 import com.marcoaga02.modularhub.shared.mapper.AccountPreferencesMapper;
 import com.marcoaga02.modularhub.shared.model.AccountPreferences;
+import com.marcoaga02.modularhub.shared.model.Language;
 import com.marcoaga02.modularhub.shared.repository.AccountPreferencesRepository;
+import com.marcoaga02.modularhub.shared.repository.LanguageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-// TODO testare
 
 @Service
 public class AccountPreferencesService {
@@ -19,9 +20,12 @@ public class AccountPreferencesService {
 
     private final AccountPreferencesMapper accountPreferencesMapper;
 
-    public AccountPreferencesService(AccountPreferencesRepository accountPreferencesRepository, AccountPreferencesMapper accountPreferencesMapper) {
+    private final LanguageRepository languageRepository;
+
+    public AccountPreferencesService(AccountPreferencesRepository accountPreferencesRepository, AccountPreferencesMapper accountPreferencesMapper, LanguageRepository languageRepository) {
         this.accountPreferencesRepository = accountPreferencesRepository;
         this.accountPreferencesMapper = accountPreferencesMapper;
+        this.languageRepository = languageRepository;
     }
 
     public AccountPreferencesResponseDTO getAccountPreferences(String identityId) {
@@ -37,11 +41,13 @@ public class AccountPreferencesService {
 
     @Transactional
     public AccountPreferencesResponseDTO createAccountPreferences(AccountPreferencesCreateDTO dto) {
-        AccountPreferences accountPreferences = new AccountPreferences();
+        Language language = validateLanguageOrElseThrow(dto.getLanguageId());
 
-        accountPreferencesMapper.toEntity(dto, accountPreferences);
+        AccountPreferences preferences = new AccountPreferences();
+        preferences.setIdentityId(dto.getIdentityId());
+        preferences.setLanguage(language);
 
-        return accountPreferencesMapper.toDto(accountPreferencesRepository.save(accountPreferences));
+        return accountPreferencesMapper.toDto(accountPreferencesRepository.save(preferences));
     }
 
     @Transactional
@@ -49,15 +55,19 @@ public class AccountPreferencesService {
         AccountPreferences accountPreferences = accountPreferencesRepository.findByIdentityId(identityId)
                 .orElseThrow(() ->
                         new NotFoundException(
-                                String.format("Account preferences for identityId %s not found", identityId)
+                                String.format("AccountPreferences for identityId '%s' not found", identityId)
                         )
                 );
 
-        accountPreferencesMapper.updateEntity(dto, accountPreferences);
+        Language language = validateLanguageOrElseThrow(dto.getLanguageId());
+        accountPreferences.setLanguage(language);
 
-        return accountPreferencesMapper.toDto(accountPreferencesRepository.save(accountPreferences));
+        return accountPreferencesMapper.toDto(accountPreferences);
     }
 
-    // TODO implementare la delete
+    private Language validateLanguageOrElseThrow(String languageId) {
+        return languageRepository.findByUuid(languageId)
+                .orElseThrow(() -> new NotFoundException(String.format("Language with uuid '%s' not found", languageId)));
+    }
 
 }

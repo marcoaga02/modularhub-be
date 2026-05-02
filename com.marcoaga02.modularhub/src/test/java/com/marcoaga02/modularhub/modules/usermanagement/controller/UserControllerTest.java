@@ -47,7 +47,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testGetAllUsersShouldReturnOkWithListAndPaginationHeaders() throws Exception {
+    void getAllUsers_shouldReturnOkWithListAndPaginationHeaders_whenValidRequest() throws Exception {
         Page<UserResponseDTO> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
         when(userService.getAllUsers(any(), any())).thenReturn(page);
 
@@ -62,7 +62,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testGetAllUsersWhenEmptyPageShouldReturnOkWithEmptyList() throws Exception {
+    void getAllUsers_shouldReturnOkWithEmptyList_whenNoUsersExist() throws Exception {
         when(userService.getAllUsers(any(), any())).thenReturn(Page.empty());
 
         mockMvc.perform(get("/users"))
@@ -71,7 +71,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testGetUserByUuidWhenUserExistsShouldReturnOk() throws Exception {
+    void getUserByUuid_shouldReturnOk_whenUserExists() throws Exception {
         when(userService.getUserByUuid("user-uuid")).thenReturn(dto);
 
         mockMvc.perform(get("/users/user-uuid"))
@@ -80,7 +80,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testGetUserByUuidWhenUserNotFoundShouldReturn404() throws Exception {
+    void getUserByUuid_shouldReturn404_whenUserNotFound() throws Exception {
         when(userService.getUserByUuid("not-existing"))
                 .thenThrow(new NotFoundException("User with uuid 'not-existing' not found"));
 
@@ -89,7 +89,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testCreateUserShouldReturnCreated() throws Exception {
+    void createUser_shouldReturnCreated() throws Exception {
         UserRequestDTO request = buildCreateRequestDTO();
 
         when(userService.createUser(any())).thenReturn(dto);
@@ -102,7 +102,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testCreateUserWhenMissingRequiredFieldsShouldReturn400() throws Exception {
+    void createUser_shouldReturn400_whenMissingRequiredFields() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -110,7 +110,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testUpdateUserShouldReturnOk() throws Exception {
+    void updateUser_shouldReturnOk_whenValidRequest() throws Exception {
         UserRequestDTO request = buildUpdateRequestDTO();
 
         when(userService.updateUser(eq("user-uuid"), any())).thenReturn(dto);
@@ -123,7 +123,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testUpdateUserWhenUserNotFoundShouldReturn404() throws Exception {
+    void updateUser_shouldReturn404_whenUserNotFound() throws Exception {
         UserRequestDTO request = buildUpdateRequestDTO();
 
         when(userService.updateUser(eq("not-existing"), any()))
@@ -136,7 +136,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testUpdateUserWhenMissingRequiredFieldsShouldReturn400() throws Exception {
+    void updateUser_shouldReturn400_whenMissingRequiredFields() throws Exception {
         mockMvc.perform(put("/users/user-uuid")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -144,7 +144,7 @@ class UserControllerTest {
     }
 
     @Test
-    void deleteUserShouldReturnNoContent() throws Exception {
+    void deleteUser_shouldReturnNoContent_whenValidRequest() throws Exception {
         mockMvc.perform(delete("/users/user-uuid"))
                 .andExpect(status().isNoContent());
 
@@ -152,7 +152,7 @@ class UserControllerTest {
     }
 
     @Test
-    void deleteUserWhenUserNotFoundShouldReturn404() throws Exception {
+    void deleteUser_shouldReturn404_whenUserNotFound() throws Exception {
         doThrow(new NotFoundException("User with uuid 'not-existing' not found"))
                 .when(userService).deleteUser("not-existing");
 

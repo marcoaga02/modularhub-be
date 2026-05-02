@@ -10,4 +10,8 @@ public final class KeycloakClaims {
 
     public static final String USERNAME = "preferred_username";
 
+    public static final String FIRST_NAME = "given_name";
+
+    public static final String LAST_NAME  = "family_name";
+
 }

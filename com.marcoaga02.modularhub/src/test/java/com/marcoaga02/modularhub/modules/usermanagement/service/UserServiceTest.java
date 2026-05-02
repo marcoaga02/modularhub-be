@@ -1,22 +1,20 @@
 package com.marcoaga02.modularhub.modules.usermanagement.service;
 
-import com.marcoaga02.modularhub.modules.usermanagement.dto.LanguageResponseDTO;
+import com.marcoaga02.modularhub.shared.dto.LanguageResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.mapper.UserMapper;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Gender;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
-import com.marcoaga02.modularhub.modules.usermanagement.repository.LanguageRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
-import com.marcoaga02.modularhub.modules.usermanagement.specification.UserSpecificationComposer;
-import com.marcoaga02.modularhub.shared.domain.CurrentAccount;
 import com.marcoaga02.modularhub.shared.dto.*;
 import com.marcoaga02.modularhub.shared.exception.BadRequestException;
 import com.marcoaga02.modularhub.shared.exception.NotFoundException;
 import com.marcoaga02.modularhub.shared.model.Language;
+import com.marcoaga02.modularhub.shared.repository.LanguageRepository;
 import com.marcoaga02.modularhub.shared.service.AccountPreferencesService;
-import com.marcoaga02.modularhub.shared.service.CurrentAccountService;
+import com.marcoaga02.modularhub.shared.service.AccountService;
 import com.marcoaga02.modularhub.shared.service.IdentityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -44,6 +43,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
+    private static final OffsetDateTime CREATED_ON = OffsetDateTime.parse("2026-01-01T10:15:30+01:00");
+    private static final OffsetDateTime UPDATED_ON = OffsetDateTime.parse("2026-02-01T10:15:30+01:00");
+
     @Mock
     private UserRepository userRepository;
 
@@ -54,13 +56,10 @@ class UserServiceTest {
     private UserMapper userMapper;
 
     @Mock
-    private UserSpecificationComposer userSpecComposer;
-
-    @Mock
     private IdentityService identityService;
 
     @Mock
-    private CurrentAccountService currentAccountService;
+    private AccountService accountService;
 
     @Mock
     private AccountPreferencesService accountPreferencesService;
@@ -98,6 +97,10 @@ class UserServiceTest {
         user1.setEmail("email@mock.it");
         user1.setUsername("username1");
         user1.setEnabled(true);
+        user1.setCreatedOn(CREATED_ON);
+        user1.setUpdatedOn(UPDATED_ON);
+        user1.setCreatedBy("Vittoria Bianchi");
+        user1.setUpdatedBy("Mario Rossi");
 
         userResponseDTO1 = new UserResponseDTO();
         userResponseDTO1.setId(user1.getUuid());
@@ -135,7 +138,24 @@ class UserServiceTest {
     }
 
     @Test
-    void testGetAllUsersShouldReturnMappedPage() {
+    void getAllUsers_shouldReturnEmptyPage_whenNoUsersMatch() {
+        UserCriteriaDTO criteria = new UserCriteriaDTO();
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<User> emptyPage = Page.empty(pageable);
+
+        when(userRepository.findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable)))
+                .thenReturn(emptyPage);
+
+        Page<UserResponseDTO> result = userService.getAllUsers(criteria, pageable);
+
+        assertThat(result).isEmpty();
+
+        verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable));
+        verify(userMapper, never()).toDto(any());
+    }
+
+    @Test
+    void getAllUsers_shouldReturnMappedPage_whenSingleUser() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         Pageable pageable = PageRequest.of(0, 10);
         Page<User> userPage = new PageImpl<>(List.of(user1), pageable, 1);
@@ -151,31 +171,12 @@ class UserServiceTest {
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent()).containsExactly(userResponseDTO1);
 
-        verify(userSpecComposer).compose(criteria);
         verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable));
         verify(userMapper).toDto(user1);
     }
 
     @Test
-    void testGetAllUsersWhenNoUsersMatchShouldReturnEmptyPage() {
-        UserCriteriaDTO criteria = new UserCriteriaDTO();
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<User> emptyPage = Page.empty(pageable);
-
-        when(userRepository.findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable)))
-                .thenReturn(emptyPage);
-
-        Page<UserResponseDTO> result = userService.getAllUsers(criteria, pageable);
-
-        assertThat(result).isEmpty();
-
-        verify(userSpecComposer).compose(criteria);
-        verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable));
-        verify(userMapper, never()).toDto(any());
-    }
-
-    @Test
-    void testGetAllUsersShouldReturnMappedPageWithMultipleUsers() {
+    void getAllUsers_shouldReturnMappedPage_whenMultipleUsers() {
         UserCriteriaDTO criteria = new UserCriteriaDTO();
         Pageable pageable = PageRequest.of(0, 10);
 
@@ -190,25 +191,27 @@ class UserServiceTest {
 
         assertThat(result.getContent()).containsExactly(userResponseDTO1, userResponseDTO2);
 
-        verify(userSpecComposer).compose(criteria);
         verify(userRepository).findAll(ArgumentMatchers.<Specification<User>>any(), eq(pageable));
         verify(userMapper).toDto(user1);
         verify(userMapper).toDto(user2);
     }
 
     @Test
-    void testGetUserByUuidWhenUserExistsShouldReturnDTO() {
+    void getUserByUuid_shouldReturnDTO_whenUserExists() {
         final String userUuid = "abc-123";
-        final String identityId = "identityId";
+        final String identityId1 = "identityId1";
+        final String identityId2 = "identityId2";
 
-        user1.setIdentityId(identityId);
+        user1.setIdentityId(identityId1);
+        user1.setCreatedBy(identityId2);
+        user1.setUpdatedBy(identityId1);
 
         IdentityGroupDTO groupDTO = new IdentityGroupDTO();
         groupDTO.setId("group-id");
         groupDTO.setName("First Group");
 
         IdentityUserResponseDTO userResponseDTO = new IdentityUserResponseDTO();
-        userResponseDTO.setId(identityId);
+        userResponseDTO.setId(identityId1);
         userResponseDTO.setUsername("username");
         userResponseDTO.setEmail("email");
         userResponseDTO.setFirstName("firstName");
@@ -221,36 +224,53 @@ class UserServiceTest {
 
         when(userRepository.findByUuidAndDeletedOnIsNull(userUuid))
                 .thenReturn(Optional.of(user1));
+        when(userRepository.findByIdentityId(identityId2))
+                .thenReturn(Optional.of(user2));
+        when(userRepository.findByIdentityId(identityId1))
+                .thenReturn(Optional.of(user1));
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
-        when(identityService.getUserById(identityId))
+        when(identityService.getUserById(identityId1))
                 .thenReturn(userResponseDTO);
-        when(accountPreferencesService.getAccountPreferences(identityId))
+        when(accountPreferencesService.getAccountPreferences(identityId1))
                 .thenReturn(preferencesResponseDTO);
 
         UserResponseDTO result = userService.getUserByUuid(userUuid);
 
         assertThat(result).isNotNull().isEqualTo(userResponseDTO1);
+        assertThat(result.getAudit()).isNotNull();
+        assertThat(result.getAudit().getCreatedBy()).isEqualTo("Vittoria Bianchi");
+        assertThat(result.getAudit().getUpdatedBy()).isEqualTo("Mario Rossi");
+        assertThat(result.getAudit().getCreatedOn()).isEqualTo(CREATED_ON);
+        assertThat(result.getAudit().getUpdatedOn()).isEqualTo(UPDATED_ON);
+
+        assertThat(result.getGroups()).hasSize(1).containsExactly(groupDTO);
+        assertThat(result.getLanguage()).isEqualTo(languageResponseDTO);
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(userUuid);
-        verify(identityService).getUserById(identityId);
-        verify(accountPreferencesService).getAccountPreferences(identityId);
+        verify(userRepository).findByIdentityId(identityId2);
+        verify(userRepository).findByIdentityId(identityId1);
+        verify(identityService).getUserById(identityId1);
+        verify(accountPreferencesService).getAccountPreferences(identityId1);
         verify(userMapper).toDto(user1);
     }
 
     @Test
-    void testGetUserByUuidWhenUserExistsNullGroupsShouldReturnDTO() {
+    void getUserByUuid_shouldReturnDTO_whenUserExistsWithNullGroups() {
         final String userUuid = "abc-123";
-        final String identityId = "identityId";
+        final String identityId1 = "identityId1";
+        final String identityId2 = "identityId2";
 
-        user1.setIdentityId(identityId);
+        user1.setIdentityId(identityId1);
+        user1.setCreatedBy(identityId2);
+        user1.setUpdatedBy(identityId1);
 
         IdentityGroupDTO groupDTO = new IdentityGroupDTO();
         groupDTO.setId("group-id");
         groupDTO.setName("First Group");
 
         IdentityUserResponseDTO userResponseDTO = new IdentityUserResponseDTO();
-        userResponseDTO.setId(identityId);
+        userResponseDTO.setId(identityId1);
         userResponseDTO.setUsername("username");
         userResponseDTO.setEmail("email");
         userResponseDTO.setFirstName("firstName");
@@ -263,25 +283,38 @@ class UserServiceTest {
 
         when(userRepository.findByUuidAndDeletedOnIsNull(userUuid))
                 .thenReturn(Optional.of(user1));
+        when(userRepository.findByIdentityId(identityId2))
+                .thenReturn(Optional.of(user2));
+        when(userRepository.findByIdentityId(identityId1))
+                .thenReturn(Optional.of(user1));
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
-        when(identityService.getUserById(identityId))
+        when(identityService.getUserById(identityId1))
                 .thenReturn(userResponseDTO);
-        when(accountPreferencesService.getAccountPreferences(identityId))
+        when(accountPreferencesService.getAccountPreferences(identityId1))
                 .thenReturn(preferencesResponseDTO);
 
         UserResponseDTO result = userService.getUserByUuid(userUuid);
 
         assertThat(result).isNotNull().isEqualTo(userResponseDTO1);
+        assertThat(result.getAudit()).isNotNull();
+        assertThat(result.getAudit().getCreatedBy()).isEqualTo("Vittoria Bianchi");
+        assertThat(result.getAudit().getUpdatedBy()).isEqualTo("Mario Rossi");
+        assertThat(result.getAudit().getCreatedOn()).isEqualTo(CREATED_ON);
+        assertThat(result.getAudit().getUpdatedOn()).isEqualTo(UPDATED_ON);
+
+        assertThat(result.getGroups()).isEmpty();
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(userUuid);
-        verify(identityService).getUserById(identityId);
-        verify(accountPreferencesService).getAccountPreferences(identityId);
+        verify(userRepository).findByIdentityId(identityId2);
+        verify(userRepository).findByIdentityId(identityId1);
+        verify(identityService).getUserById(identityId1);
+        verify(accountPreferencesService).getAccountPreferences(identityId1);
         verify(userMapper).toDto(user1);
     }
 
     @Test
-    void testGetUserByUuidWhenUserNotFoundShouldThrowNotFoundException() {
+    void getUserByUuid_shouldThrowNotFoundException_whenUserNotFound() {
         when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
                 .thenReturn(Optional.empty());
 
@@ -290,11 +323,12 @@ class UserServiceTest {
                 .hasMessageContaining("User with uuid 'not-existing' not found");
 
         verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(userRepository, never()).findByIdentityId(anyString());
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
-    void testCreateUserWhenTaxIdNumberNotExistsShouldCreateAndReturnDTO() {
+    void createUser_shouldCreateAndReturnDTO_whenTaxIdNumberNotExists() {
         final String identityId = "identityId";
 
         UserRequestDTO dto = buildUserRequestDTO();
@@ -303,7 +337,7 @@ class UserServiceTest {
         preferencesResponseDTO.setLanguage(languageResponseDTO);
 
         when(languageRepository.findByUuid("LANG_ID_01"))
-                .thenReturn(language);
+                .thenReturn(Optional.of(language));
         when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW"))
                 .thenReturn(Optional.empty());
         when(userRepository.save(any(User.class)))
@@ -359,13 +393,13 @@ class UserServiceTest {
     }
 
     @Test
-    void testCreateUserWhenTaxIdNumberAlreadyExistsShouldThrowBadRequestException() {
+    void createUser_shouldThrowBadRequestException_whenTaxIdNumberAlreadyExists() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_01");
         dto.setLanguageId("LANG_ID_01");
 
         when(languageRepository.findByUuid("LANG_ID_01"))
-                .thenReturn(language);
+                .thenReturn(Optional.of(language));
         when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_01"))
                 .thenReturn(Optional.of(user1));
 
@@ -376,18 +410,19 @@ class UserServiceTest {
         verify(languageRepository).findByUuid("LANG_ID_01");
         verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_01");
         verify(identityService, never()).createUser(any(IdentityUserCreateRequestDTO.class));
+        verify(accountPreferencesService, never()).createAccountPreferences(any(AccountPreferencesCreateDTO.class));
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
-    void testCreateUserWhenInvalidLanguageIdShouldThrowBadRequestException() {
+    void createUser_shouldThrowBadRequestException_whenInvalidLanguageId() {
         UserRequestDTO dto = new UserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_01");
         dto.setLanguageId("INVALID_LANG");
 
         when(languageRepository.findByUuid("INVALID_LANG"))
-                .thenReturn(null);
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.createUser(dto))
                 .isInstanceOf(BadRequestException.class)
@@ -396,12 +431,13 @@ class UserServiceTest {
         verify(languageRepository).findByUuid("INVALID_LANG");
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(identityService, never()).createUser(any(IdentityUserCreateRequestDTO.class));
+        verify(accountPreferencesService, never()).createAccountPreferences(any(AccountPreferencesCreateDTO.class));
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
-    void testUpdateUserWhenValidShouldUpdateAndReturnDTO() {
+    void updateUser_shouldUpdateAndReturnDTO_whenValid() {
         final String identityId = "identityId";
         user1.setIdentityId(identityId);
 
@@ -414,7 +450,7 @@ class UserServiceTest {
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
         when(languageRepository.findByUuid("LANG_ID_01"))
-                .thenReturn(language);
+                .thenReturn(Optional.of(language));
         when(userMapper.toDto(user1))
                 .thenReturn(userResponseDTO1);
         when(accountPreferencesService.updateAccountPreferencesByIdentityId(
@@ -461,7 +497,7 @@ class UserServiceTest {
     }
 
     @Test
-    void testUpdateUserWhenUserNotFoundShouldThrowNotFoundException() {
+    void updateUser_shouldThrowNotFoundException_whenUserNotFound() {
         UserRequestDTO dto = buildUserRequestDTO();
 
         when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
@@ -476,18 +512,19 @@ class UserServiceTest {
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper, never()).updateEntity(any(), any());
         verify(identityService, never()).updateUser(any(), any());
+        verify(accountPreferencesService, never()).updateAccountPreferencesByIdentityId(anyString(), any(AccountPreferencesUpdateDTO.class));
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
-    void testUpdateUserWhenInvalidLanguageShouldThrowBadRequestException() {
+    void updateUser_shouldThrowBadRequestException_whenInvalidLanguage() {
         UserRequestDTO dto = buildUserRequestDTO();
         dto.setLanguageId("INVALID_LANG");
 
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
         when(languageRepository.findByUuid("INVALID_LANG"))
-                .thenReturn(null);
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.updateUser(user1.getUuid(), dto))
                 .isInstanceOf(BadRequestException.class)
@@ -498,18 +535,19 @@ class UserServiceTest {
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper, never()).updateEntity(any(), any());
         verify(identityService, never()).updateUser(any(), any());
+        verify(accountPreferencesService, never()).updateAccountPreferencesByIdentityId(anyString(), any(AccountPreferencesUpdateDTO.class));
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
-    void testUpdateUserWhenTaxIdNumberChangedAndAlreadyExistsShouldThrowBadRequestException() {
+    void updateUser_shouldThrowBadRequestException_whenTaxIdNumberAlreadyExists() {
         UserRequestDTO dto = buildUserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_02");
 
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
         when(languageRepository.findByUuid("LANG_ID_01"))
-                .thenReturn(language);
+                .thenReturn(Optional.of(language));
         when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_02"))
                 .thenReturn(Optional.of(user2));
 
@@ -522,11 +560,12 @@ class UserServiceTest {
         verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_02");
         verify(userMapper, never()).updateEntity(any(), any());
         verify(identityService, never()).updateUser(any(), any());
+        verify(accountPreferencesService, never()).updateAccountPreferencesByIdentityId(anyString(), any(AccountPreferencesUpdateDTO.class));
         verify(userMapper, never()).toDto(any());
     }
 
     @Test
-    void testUpdateUserWhenTaxIdNumberChangedAndNotExistsShouldUpdateAndReturnDTO() {
+    void updateUser_shouldUpdateAndReturnDTO_whenTaxIdNumberChangedAndNotExists() {
         final String identityId = "identityId";
         user1.setIdentityId(identityId);
 
@@ -539,7 +578,7 @@ class UserServiceTest {
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
         when(languageRepository.findByUuid("LANG_ID_01"))
-                .thenReturn(language);
+                .thenReturn(Optional.of(language));
         when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_NEW"))
                 .thenReturn(Optional.empty());
         when(userMapper.toDto(user1))
@@ -588,34 +627,36 @@ class UserServiceTest {
     }
 
     @Test
-    void testDeleteUserWhenValidShouldLogicallyDeleteUser() {
-        CurrentAccount currentAccount = new CurrentAccount(
-                "keycloakId",
+    void deleteUser_shouldSoftDeleteUser_whenValid() {
+        AccountDTO currentAccount = new AccountDTO(
+                "identityId",
                 "user@email.com",
                 "username",
+                "firstName",
+                "lastName",
                 Set.of(),
                 new AccountPreferencesResponseDTO()
         );
 
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
-        when(currentAccountService.getCurrentAccount())
+        when(accountService.getCurrentAccount())
                 .thenReturn(currentAccount);
 
         assertThat(user1.getDeletedOn()).isNull();
 
         userService.deleteUser(user1.getUuid());
 
-        assertThat(user1.getDeletedBy()).isEqualTo("keycloakId");
+        assertThat(user1.getDeletedBy()).isEqualTo("identityId");
         assertThat(user1.getDeletedOn()).isNotNull();
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
-        verify(currentAccountService).getCurrentAccount();
+        verify(accountService).getCurrentAccount();
         verify(userRepository).save(user1);
     }
 
     @Test
-    void testDeleteUserWhenUserNotFoundShouldThrowNotFoundException() {
+    void deleteUser_shouldThrowNotFoundException_whenUserNotFound() {
         when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
                 .thenReturn(Optional.empty());
 
@@ -624,7 +665,7 @@ class UserServiceTest {
                 .hasMessageContaining("User with uuid 'not-existing' not found");
 
         verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
-        verify(currentAccountService, never()).getCurrentAccount();
+        verify(accountService, never()).getCurrentAccount();
         verify(userRepository, never()).save(any());
     }
 
