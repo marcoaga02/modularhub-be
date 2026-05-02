@@ -3,7 +3,6 @@ package com.marcoaga02.modularhub.shared.config;
 import com.marcoaga02.modularhub.shared.constant.KeycloakClaims;
 import com.marcoaga02.modularhub.shared.constant.PaginationHeaders;
 import com.marcoaga02.modularhub.shared.constant.SecurityConstants;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -23,17 +22,11 @@ import java.util.List;
 @Profile("!test")
 public class SecurityConfig {
 
-    @Value("${cors.allowed-origins}")
-    private List<String> allowedOrigins;
+    private final CorsProperties corsProperties;
 
-    @Value("${cors.allowed-methods}")
-    private List<String> allowedMethods;
-
-    @Value("${cors.allowed-headers}")
-    private List<String> allowedHeaders;
-
-    @Value("${cors.allow-credentials}")
-    private boolean allowCredentials;
+    public SecurityConfig(CorsProperties corsProperties) {
+        this.corsProperties = corsProperties;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
@@ -53,10 +46,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(allowedOrigins);
-        config.setAllowedMethods(allowedMethods);
-        config.setAllowedHeaders(allowedHeaders);
-        config.setAllowCredentials(allowCredentials);
+        config.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        config.setAllowedMethods(corsProperties.getAllowedMethods());
+        config.setAllowedHeaders(corsProperties.getAllowedHeaders());
+        config.setAllowCredentials(corsProperties.isAllowCredentials());
 
         config.setExposedHeaders(List.of(
                 PaginationHeaders.TOTAL_COUNT,
