@@ -1,24 +1,25 @@
 package com.marcoaga02.modularhub.modules.usermanagement.controller;
 
+import com.marcoaga02.modularhub.modules.usermanagement.constant.UserRoles;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.service.UserService;
 import com.marcoaga02.modularhub.shared.util.PageResponseEntity;
 import com.marcoaga02.modularhub.shared.validation.OnCreate;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.groups.Default;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@PreAuthorize("hasRole('USER_MANAGEMENT')")
+@RolesAllowed({UserRoles.USER_MANAGEMENT})
 @RequestMapping("/users")
 public class UserController {
 

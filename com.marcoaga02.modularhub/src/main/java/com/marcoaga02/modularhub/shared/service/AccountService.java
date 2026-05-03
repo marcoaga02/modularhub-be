@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 @RequestScope
 public class AccountService {
 
+    // TODO valutare se fare chaching
+
     private final AccountPreferencesService accountPreferencesService;
 
     public AccountService(AccountPreferencesService accountPreferencesService) {

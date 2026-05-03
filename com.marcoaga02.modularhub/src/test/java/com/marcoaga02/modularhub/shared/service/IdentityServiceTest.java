@@ -115,8 +115,8 @@ class IdentityServiceTest {
     @Test
     void getUserById_shouldReturnUser() {
         final String identityId = "identity-id";
-        IdentityGroupDTO groupDTO1 = createIdentityGroupDTO("group-id1", "first group");
-        IdentityGroupDTO groupDTO2 = createIdentityGroupDTO("group-id2", "second group");
+        IdentityGroupDTO groupDTO1 = createIdentityGroupDTO("group-id1", "first group", "first group description");
+        IdentityGroupDTO groupDTO2 = createIdentityGroupDTO("group-id2", "second group", "second group description");
 
         IdentityUserResponseDTO userResponseDTO = createIdentityUserResponseDto(
                 identityId,
@@ -173,6 +173,48 @@ class IdentityServiceTest {
         identityService.deleteUser(userId);
 
         verify(identityProvider).deleteUser(userId);
+    }
+
+    @Test
+    void getGroups_shouldReturnEmptyList_whenNoGroupIsPresent() {
+        when(identityProvider.getGroups()).thenReturn(List.of());
+
+        List<IdentityGroupDTO> result = identityService.getGroups();
+
+        assertThat(result).isEmpty();
+
+        verify(identityProvider).getGroups();
+    }
+
+    @Test
+    void getGroups_shouldReturnGroup_whenOneGroupIsPresent() {
+        IdentityGroupDTO groupDto = createIdentityGroupDTO("group-id1", "first group", "first group description");
+
+        when(identityProvider.getGroups()).thenReturn(List.of(groupDto));
+
+        List<IdentityGroupDTO> result = identityService.getGroups();
+
+        assertThat(result)
+                .hasSize(1)
+                .containsExactly(groupDto);
+
+        verify(identityProvider).getGroups();
+    }
+
+    @Test
+    void getGroups_shouldReturnAllGroups_whenMultipleGroupsArePresent() {
+        IdentityGroupDTO firstGroupDto = createIdentityGroupDTO("group-id1", "first group", "first group description");
+        IdentityGroupDTO secondGroupDto = createIdentityGroupDTO("group-id2", "second group",  "second group description");
+
+        when(identityProvider.getGroups()).thenReturn(List.of(firstGroupDto, secondGroupDto));
+
+        List<IdentityGroupDTO> result = identityService.getGroups();
+
+        assertThat(result)
+                .hasSize(2)
+                .containsExactlyInAnyOrder(firstGroupDto, secondGroupDto);
+
+        verify(identityProvider).getGroups();
     }
 
     private IdentityUserCreateRequestDTO createIdentityUserCreateRequestDto(
@@ -240,11 +282,13 @@ class IdentityServiceTest {
 
     private IdentityGroupDTO createIdentityGroupDTO(
             String id,
-            String name
+            String name,
+            String description
     ) {
         IdentityGroupDTO groupDTO = new IdentityGroupDTO();
         groupDTO.setId(id);
         groupDTO.setName(name);
+        groupDTO.setDescription(description);
 
         return groupDTO;
     }

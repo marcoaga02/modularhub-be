@@ -111,14 +111,14 @@ public class KeycloakIdentityProviderService implements IdentityProviderService 
     @Override
     public List<IdentityGroupDTO> getGroups() {
         return execute(() -> realm().groups().groups().stream()
-                .map(g -> new IdentityGroupDTO(g.getId(), g.getName()))
+                .map(g -> new IdentityGroupDTO(g.getId(), g.getName(), g.getDescription()))
                 .toList());
     }
 
     @Override
     public List<IdentityGroupDTO> getUserGroups(String userId) {
         return execute(() -> realm().users().get(userId).groups().stream()
-                .map(g -> new IdentityGroupDTO(g.getId(), g.getName()))
+                .map(g -> new IdentityGroupDTO(g.getId(), g.getName(), g.getDescription()))
                 .toList());
     }
 

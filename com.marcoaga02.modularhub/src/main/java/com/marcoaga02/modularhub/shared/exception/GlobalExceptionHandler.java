@@ -13,7 +13,7 @@ public class GlobalExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // TODO modificare per evitare di mandare messaggi di stacktrace
+    // TODO modificare per evitare di mandare messaggi di stacktrace e implementare gli handler delle eccezioni lanciate
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ErrorDTO> handleGenericException(Exception ex) {
 //        ErrorDTO errorDTO = new ErrorDTO(

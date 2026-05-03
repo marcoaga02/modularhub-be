@@ -51,7 +51,7 @@ class AccountServiceTest {
     void getCurrentAccount_shouldReturnCorrectAccount() {
         mockAuthentication(
                 Map.of("sub", "uuid-123", "email", "mario@test.com", "preferred_username", "mario"),
-                List.of("USER_MANAGEMENT")
+                List.of("ROLE")
         );
 
         AccountDTO account = accountService.getCurrentAccount();
@@ -59,25 +59,25 @@ class AccountServiceTest {
         assertThat(account.getIdentityId()).isEqualTo("uuid-123");
         assertThat(account.getEmail()).isEqualTo("mario@test.com");
         assertThat(account.getUsername()).isEqualTo("mario");
-        assertThat(account.getRoles()).containsExactly("USER_MANAGEMENT");
+        assertThat(account.getRoles()).containsExactly("ROLE");
     }
 
     @Test
     void hasRole_shouldReturnTrue_whenRoleExists() {
-        mockAuthentication(Map.of("sub", "uuid-123"), List.of("USER_MANAGEMENT"));
-        assertThat(accountService.hasRole("USER_MANAGEMENT")).isTrue();
+        mockAuthentication(Map.of("sub", "uuid-123"), List.of("ROLE"));
+        assertThat(accountService.hasRole("ROLE")).isTrue();
     }
 
     @Test
     void hasRole_shouldReturnFalse_whenRoleNotExists() {
         mockAuthentication(Map.of("sub", "uuid-123"), List.of());
-        assertThat(accountService.hasRole("USER_MANAGEMENT")).isFalse();
+        assertThat(accountService.hasRole("ROLE")).isFalse();
     }
 
     @Test
     void hasAnyRole_shouldReturnTrue_whenAtLeastOneRoleExists() {
-        mockAuthentication(Map.of("sub", "uuid-123"), List.of("USER_MANAGEMENT"));
-        assertThat(accountService.hasAnyRole("USER_MANAGEMENT", "ADMIN")).isTrue();
+        mockAuthentication(Map.of("sub", "uuid-123"), List.of("ROLE"));
+        assertThat(accountService.hasAnyRole("ROLE", "ADMIN")).isTrue();
     }
 
     @Test

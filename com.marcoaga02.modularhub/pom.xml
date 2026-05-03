@@ -247,7 +247,7 @@
                             <mutator>DEFAULTS</mutator>
                         </mutators>
                         <excludedClasses>
-                            <param>com.marcoaga02.modularhub.shared.constant.*</param>
+                            <param>com.marcoaga02.modularhub.*.constant.*</param>
                             <param>com.marcoaga02.modularhub.shared.validation.*</param>
                             <param>com.marcoaga02.modularhub.shared.config.*</param>
                             <param>com.marcoaga02.modularhub.shared.exception.*</param>

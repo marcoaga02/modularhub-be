@@ -15,4 +15,6 @@ public class IdentityGroupDTO {
 
     private String name;
 
+    private String description;
+
 }

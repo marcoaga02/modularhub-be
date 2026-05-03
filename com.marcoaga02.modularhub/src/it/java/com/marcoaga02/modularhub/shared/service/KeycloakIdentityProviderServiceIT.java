@@ -39,8 +39,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class KeycloakIdentityProviderServiceIT extends BaseIT {
 
     private static final String REALM = "test-realm";
-    private static final String FIRST_GROUP = "test-group-first";
-    private static final String SECOND_GROUP = "test-group-second";
+
+    private static final String FIRST_GROUP_NAME = "test-group-first-name";
+    private static final String FIRST_GROUP_DESCRIPTION = "test-group-first-desc";
+
+    private static final String SECOND_GROUP_NAME = "test-group-second-name";
+    private static final String SECOND_GROUP_DESCRIPTION = "test-group-second-desc";
 
     @Container
     private static final KeycloakContainer keycloak =
@@ -80,10 +84,12 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
             adminClient.realms().create(realm);
 
             GroupRepresentation firstGroup = new GroupRepresentation();
-            firstGroup.setName(FIRST_GROUP);
+            firstGroup.setName(FIRST_GROUP_NAME);
+            firstGroup.setDescription(FIRST_GROUP_DESCRIPTION);
 
             GroupRepresentation secondGroup = new GroupRepresentation();
-            secondGroup.setName(SECOND_GROUP);
+            secondGroup.setName(SECOND_GROUP_NAME);
+            secondGroup.setDescription(SECOND_GROUP_DESCRIPTION);
 
             adminClient.realm(REALM).groups().add(firstGroup);
             adminClient.realm(REALM).groups().add(secondGroup);
@@ -103,13 +109,13 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
         List<GroupRepresentation> groups = adminClient.realm(REALM).groups().groups();
 
         firstGroupId = groups.stream()
-                .filter(g -> g.getName().equals(FIRST_GROUP))
+                .filter(g -> g.getName().equals(FIRST_GROUP_NAME))
                 .map(GroupRepresentation::getId)
                 .findFirst()
                 .orElseThrow();
 
         secondGroupId = groups.stream()
-                .filter(g -> g.getName().equals(SECOND_GROUP))
+                .filter(g -> g.getName().equals(SECOND_GROUP_NAME))
                 .map(GroupRepresentation::getId)
                 .findFirst()
                 .orElseThrow();
@@ -475,10 +481,10 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
                     assertThat(u.getLastName()).isEqualTo("Rossi");
                     assertThat(u.getEnabled()).isTrue();
                     assertThat(u.getGroups())
-                            .extracting(IdentityGroupDTO::getId, IdentityGroupDTO::getName)
+                            .extracting(IdentityGroupDTO::getId, IdentityGroupDTO::getName, IdentityGroupDTO::getDescription)
                             .containsExactlyInAnyOrder(
-                                    tuple(firstGroupId, FIRST_GROUP),
-                                    tuple(secondGroupId, SECOND_GROUP)
+                                    tuple(firstGroupId, FIRST_GROUP_NAME, FIRST_GROUP_DESCRIPTION),
+                                    tuple(secondGroupId, SECOND_GROUP_NAME, SECOND_GROUP_DESCRIPTION)
                             );
                 });
     }
@@ -494,10 +500,10 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
     @Test
     void getGroups_shouldReturnGroups_whenValidRequest() {
         assertThat(keycloakService.getGroups())
-                .extracting(IdentityGroupDTO::getId, IdentityGroupDTO::getName)
+                .extracting(IdentityGroupDTO::getId, IdentityGroupDTO::getName, IdentityGroupDTO::getDescription)
                 .containsExactlyInAnyOrder(
-                        tuple(firstGroupId, FIRST_GROUP),
-                        tuple(secondGroupId, SECOND_GROUP)
+                        tuple(firstGroupId, FIRST_GROUP_NAME, FIRST_GROUP_DESCRIPTION),
+                        tuple(secondGroupId, SECOND_GROUP_NAME, SECOND_GROUP_DESCRIPTION)
                 );
     }
 
@@ -518,8 +524,8 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
         assertNotNull(userId);
 
         assertThat(keycloakService.getUserGroups(userId))
-                .extracting(IdentityGroupDTO::getId, IdentityGroupDTO::getName)
-                .containsExactly(tuple(firstGroupId, FIRST_GROUP));
+                .extracting(IdentityGroupDTO::getId, IdentityGroupDTO::getName, IdentityGroupDTO::getDescription)
+                .containsExactly(tuple(firstGroupId, FIRST_GROUP_NAME, FIRST_GROUP_DESCRIPTION));
     }
 
     @Test
@@ -539,10 +545,10 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
         assertNotNull(userId);
 
         assertThat(keycloakService.getUserGroups(userId))
-                .extracting(IdentityGroupDTO::getId, IdentityGroupDTO::getName)
+                .extracting(IdentityGroupDTO::getId, IdentityGroupDTO::getName, IdentityGroupDTO::getDescription)
                 .containsExactlyInAnyOrder(
-                        tuple(firstGroupId, FIRST_GROUP),
-                        tuple(secondGroupId, SECOND_GROUP)
+                        tuple(firstGroupId, FIRST_GROUP_NAME, FIRST_GROUP_DESCRIPTION),
+                        tuple(secondGroupId, SECOND_GROUP_NAME, SECOND_GROUP_DESCRIPTION)
                 );
     }
 

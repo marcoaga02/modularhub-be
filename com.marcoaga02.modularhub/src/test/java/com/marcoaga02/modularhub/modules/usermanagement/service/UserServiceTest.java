@@ -208,6 +208,7 @@ class UserServiceTest {
         IdentityGroupDTO groupDTO = new IdentityGroupDTO();
         groupDTO.setId("group-id");
         groupDTO.setName("First Group");
+        groupDTO.setDescription("First Group Description");
 
         IdentityUserResponseDTO userResponseDTO = new IdentityUserResponseDTO();
         userResponseDTO.setId(identityId1);
@@ -267,6 +268,7 @@ class UserServiceTest {
         IdentityGroupDTO groupDTO = new IdentityGroupDTO();
         groupDTO.setId("group-id");
         groupDTO.setName("First Group");
+        groupDTO.setDescription("First Group Description");
 
         IdentityUserResponseDTO userResponseDTO = new IdentityUserResponseDTO();
         userResponseDTO.setId(identityId1);
@@ -680,7 +682,7 @@ class UserServiceTest {
         dto.setUsername("new username");
         dto.setEnabled(false);
         dto.setPassword("password");
-        dto.setGroupsIds(List.of("group-id"));
+        dto.setGroupIds(List.of("group-id"));
         return dto;
     }
 

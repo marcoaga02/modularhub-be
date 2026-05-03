@@ -43,7 +43,7 @@ public class UserRequestDTO {
     @NotBlank(groups = OnCreate.class)
     private String password;
 
-    private List<String> groupsIds;
+    private List<String> groupIds;
 
     @NotNull
     private Boolean enabled;

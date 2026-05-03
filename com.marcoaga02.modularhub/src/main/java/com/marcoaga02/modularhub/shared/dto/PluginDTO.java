@@ -1,8 +1,20 @@
 package com.marcoaga02.modularhub.shared.dto;
 
-public record PluginDTO(
-        String path,
-        String name,
-        String description,
-        String icon
-){}
+import lombok.*;
+
+@Getter
+@Setter
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
+public class PluginDTO {
+
+    private String path;
+
+    private String name;
+
+    private String description;
+
+    private String icon;
+
+}

@@ -1,6 +1,5 @@
 package com.marcoaga02.modularhub.shared.config;
 
-import com.marcoaga02.modularhub.shared.constant.KeycloakClaims;
 import com.marcoaga02.modularhub.shared.constant.PaginationHeaders;
 import com.marcoaga02.modularhub.shared.constant.SecurityConstants;
 import org.springframework.context.annotation.Bean;
@@ -8,14 +7,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
@@ -65,12 +66,22 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
-        converter.setAuthoritiesClaimName(KeycloakClaims.REALM_ACCESS_ROLES);
-        converter.setAuthorityPrefix(SecurityConstants.ROLE_PREFIX);
-
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
-        jwtConverter.setJwtGrantedAuthoritiesConverter(converter);
+
+        jwtConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
+
+            if (realmAccess == null || !realmAccess.containsKey("roles")) {
+                return List.of();
+            }
+
+            List<String> roles = (List<String>) realmAccess.get("roles");
+
+            return roles.stream()
+                    .map(role -> new SimpleGrantedAuthority(SecurityConstants.ROLE_PREFIX + role))
+                    .collect(Collectors.toList());
+        });
+
         return jwtConverter;
     }
 }

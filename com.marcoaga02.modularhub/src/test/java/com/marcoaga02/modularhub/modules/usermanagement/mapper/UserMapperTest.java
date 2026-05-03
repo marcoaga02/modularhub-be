@@ -134,7 +134,7 @@ class UserMapperTest {
         dto.setEmail("new@email.com");
         dto.setUsername("new username");
         dto.setPassword("new password");
-        dto.setGroupsIds(List.of("group1", "group2"));
+        dto.setGroupIds(List.of("group1", "group2"));
         dto.setEnabled(false);
         return dto;
     }

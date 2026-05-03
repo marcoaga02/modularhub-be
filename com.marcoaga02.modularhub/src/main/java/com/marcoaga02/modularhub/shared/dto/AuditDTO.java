@@ -10,8 +10,13 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuditDTO {
+
     private OffsetDateTime createdOn;
+
     private OffsetDateTime updatedOn;
+
     private String createdBy;
+
     private String updatedBy;
+
 }

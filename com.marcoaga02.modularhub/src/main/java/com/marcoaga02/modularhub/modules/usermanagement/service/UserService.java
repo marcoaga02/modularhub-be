@@ -106,7 +106,7 @@ public class UserService {
                 dto.getEnabled(),
                 EMAIL_VERIFIED,
                 dto.getPassword(),
-                dto.getGroupsIds()
+                dto.getGroupIds()
         );
 
         String identityId = identityService.createUser(userRequestDTO);
@@ -149,7 +149,7 @@ public class UserService {
                 dto.getFirstname(),
                 dto.getLastname(),
                 dto.getEnabled(),
-                dto.getGroupsIds()
+                dto.getGroupIds()
         );
 
         identityService.updateUser(user.getIdentityId(), userRequestDTO);

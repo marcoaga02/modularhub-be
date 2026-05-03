@@ -1,10 +1,13 @@
 package com.marcoaga02.modularhub.shared.service;
 
+import com.marcoaga02.modularhub.shared.dto.IdentityGroupDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserCreateRequestDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserUpdateRequestDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Service
 public class IdentityService {
@@ -41,5 +44,9 @@ public class IdentityService {
 
     public void deleteUser(String userId) {
         identityProvider.deleteUser(userId);
+    }
+
+    public List<IdentityGroupDTO> getGroups() {
+        return identityProvider.getGroups();
     }
 }
