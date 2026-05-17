@@ -29,7 +29,7 @@ public class UserSpecification {
     }
 
     private static Specification<User> textSearch(String text) {
-        String pattern = "%" + text.toLowerCase() + "%";
+        String pattern = "%" + text.toLowerCase().trim() + "%";
 
         return (root, query, cb) -> cb.or(
                 cb.like(cb.lower(root.get("firstname")), pattern),

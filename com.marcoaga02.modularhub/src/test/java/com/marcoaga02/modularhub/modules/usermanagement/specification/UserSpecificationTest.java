@@ -110,6 +110,23 @@ class UserSpecificationTest extends BaseRepositoryTest {
     }
 
     @Test
+    void byCriteria_shouldReturnNotDeletedUserWithTrim_whenFilteringOnFirstName() {
+        User user = createAndSaveUser("Mario", "Rossi", "email1@gmail.com", null);
+        createAndSaveUser("Pippo", "Bianchi", "email2@gmail.com", null);
+        createAndSaveUser("Mariolino", "Verdi", "email3@gmail.com", OffsetDateTime.now());
+
+        List<User> result = userRepository.findAll(
+                        UserSpecification.byCriteria(new UserCriteriaDTO(" rio\t"))
+                )
+                .stream()
+                .sorted(Comparator.comparing(User::getFirstname, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getUuid()).isEqualTo(user.getUuid());
+    }
+
+    @Test
     void byCriteria_shouldReturnNotDeletedMultipleUsers_whenFilteringOnFirstNameIgnoreCase() {
         User firstUser = createAndSaveUser("MARIO", "Rossi", "email1@gmail.com", null);
         User secondUser = createAndSaveUser("Maria", "Bianchi", "email2@gmail.com", null);
@@ -145,6 +162,23 @@ class UserSpecificationTest extends BaseRepositoryTest {
     }
 
     @Test
+    void byCriteria_shouldReturnNotDeletedUserWithTrim_whenFilteringOnLastName() {
+        User user = createAndSaveUser("Mario", "Rossi", "email1@gmail.com", null);
+        createAndSaveUser("Maria", "Bianchi", "email2@gmail.com", null);
+        createAndSaveUser("Luigi", "Fossati", "email3@gmail.com", OffsetDateTime.now());
+
+        List<User> result = userRepository.findAll(
+                        UserSpecification.byCriteria(new UserCriteriaDTO(" ssi\t "))
+                )
+                .stream()
+                .sorted(Comparator.comparing(User::getFirstname, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getUuid()).isEqualTo(user.getUuid());
+    }
+
+    @Test
     void byCriteria_shouldReturnNotDeletedMultipleUsers_whenFilteringOnLastNameIgnoreCase() {
         User firstUser = createAndSaveUser("Mario", "ROSSI", "email1@gmail.com", null);
         User secondUser = createAndSaveUser("Maria", "PRoSsima", "email2@gmail.com", null);
@@ -170,6 +204,23 @@ class UserSpecificationTest extends BaseRepositoryTest {
 
         List<User> result = userRepository.findAll(
                         UserSpecification.byCriteria(new UserCriteriaDTO("isc"))
+                )
+                .stream()
+                .sorted(Comparator.comparing(User::getFirstname, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getUuid()).isEqualTo(user.getUuid());
+    }
+
+    @Test
+    void byCriteria_shouldReturnNotDeletedUserWithTrim_whenFilteringOnEmail() {
+        User user = createAndSaveUser("Mario", "Rossi", "email1@tiscali.com", null);
+        createAndSaveUser("Maria", "Bianchi", "email2@gmail.com", null);
+        createAndSaveUser("Luigi", "Verdi", "email3@tiscali.com", OffsetDateTime.now());
+
+        List<User> result = userRepository.findAll(
+                        UserSpecification.byCriteria(new UserCriteriaDTO(" ali.com\t "))
                 )
                 .stream()
                 .sorted(Comparator.comparing(User::getFirstname, String.CASE_INSENSITIVE_ORDER))

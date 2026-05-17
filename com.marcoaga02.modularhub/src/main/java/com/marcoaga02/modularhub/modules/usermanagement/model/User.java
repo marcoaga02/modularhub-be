@@ -31,13 +31,13 @@ public class User extends AuditableEntity {
     @Column(name = "mobile_number")
     private String mobileNumber;
 
-    @Column(name = "tax_id_number", unique = true)
+    @Column(name = "tax_id_number")
     private String taxIdNumber;
 
-    @Column(name = "email", unique = true)
+    @Column(name = "email")
     private String email;
 
-    @Column(name = "username", unique = true)
+    @Column(name = "username")
     private String username;
 
     @Column(name = "enabled")

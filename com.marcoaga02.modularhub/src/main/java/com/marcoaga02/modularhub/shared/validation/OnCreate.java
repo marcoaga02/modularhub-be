@@ -1,4 +1,6 @@
 package com.marcoaga02.modularhub.shared.validation;
 
-public interface OnCreate {
+import jakarta.validation.groups.Default;
+
+public interface OnCreate extends Default {
 }
