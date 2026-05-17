@@ -1,13 +1,14 @@
 package com.marcoaga02.modularhub.shared.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.NOT_FOUND)
-public class NotFoundException extends RuntimeException {
+public abstract class NotFoundException extends ApplicationException {
 
-    public NotFoundException(String message) {
-        super(message);
+    protected NotFoundException(String errorCode, String logMessage) {
+        super(errorCode, HttpStatus.NOT_FOUND, logMessage);
     }
 
+    protected NotFoundException(String errorCode, String logMessage, Throwable cause) {
+        super(errorCode, HttpStatus.NOT_FOUND, logMessage, cause);
+    }
 }

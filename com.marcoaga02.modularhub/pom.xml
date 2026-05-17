@@ -250,7 +250,7 @@
                             <param>com.marcoaga02.modularhub.*.constant.*</param>
                             <param>com.marcoaga02.modularhub.shared.validation.*</param>
                             <param>com.marcoaga02.modularhub.shared.config.*</param>
-                            <param>com.marcoaga02.modularhub.shared.exception.*</param>
+                            <param>com.marcoaga02.modularhub.*.exception.*</param>
                             <param>com.marcoaga02.modularhub.ModularhubApplication</param>
                             <param>com.marcoaga02.modularhub.*.model.*</param>
                             <param>com.marcoaga02.modularhub.*.dto.*</param>

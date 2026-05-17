@@ -1,40 +1,68 @@
 package com.marcoaga02.modularhub.shared.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.marcoaga02.modularhub.shared.constant.ExceptionCodes;
+import com.marcoaga02.modularhub.shared.dto.ErrorDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // TODO modificare per evitare di mandare messaggi di stacktrace e implementare gli handler delle eccezioni lanciate
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ErrorDTO> handleGenericException(Exception ex) {
-//        ErrorDTO errorDTO = new ErrorDTO(
-//                LocalDateTime.now(),
-//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-//                "Internal Server Error",
-//                "An unexpected error occurred: " + ex.getMessage()
-//        );
-//
-//        LOGGER.error("Handled exception", ex);
-//
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDTO);
-//    }
+    @ExceptionHandler(ApplicationException.class)
+    public ResponseEntity<ErrorDTO> handleApplicationException(ApplicationException ex) {
+        LOGGER.error("[{}] {}", ex.getErrorCode(), ex.getLogMessage(), ex);
 
-    @Getter
-    @AllArgsConstructor
-    public class ErrorDTO {
-        private LocalDateTime timestamp;
-        private int status;
-        private String error;
-        private String message;
+        ErrorDTO body = new ErrorDTO(
+                LocalDateTime.now(),
+                ex.getHttpStatus().value(),
+                ex.getErrorCode()
+        );
+
+        return ResponseEntity.status(ex.getHttpStatus()).body(body);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorDTO> handleValidationException(MethodArgumentNotValidException ex) {
+        List<String> fields = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(FieldError::getField)
+                .toList();
+
+        LOGGER.error("Validation failed for fields: {}", fields);
+
+        ErrorDTO body = new ErrorDTO(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ExceptionCodes.VALIDATION_INVALID_FIELDS,
+                fields
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorDTO> handleGenericException(Exception ex) {
+        LOGGER.error("Unhandled exception", ex);
+
+        ErrorDTO body = new ErrorDTO(
+                LocalDateTime.now(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                ExceptionCodes.INTERNAL_ERROR
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
 }

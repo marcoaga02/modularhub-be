@@ -2,11 +2,13 @@ package com.marcoaga02.modularhub.shared.service;
 
 import com.marcoaga02.modularhub.config.BaseIT;
 import com.marcoaga02.modularhub.config.TestContainersImages;
+import com.marcoaga02.modularhub.shared.constant.ExceptionCodes;
 import com.marcoaga02.modularhub.shared.dto.IdentityGroupDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserCreateRequestDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserUpdateRequestDTO;
 import com.marcoaga02.modularhub.shared.exception.IdentityProviderException;
+import com.marcoaga02.modularhub.shared.exception.InvalidArgumentException;
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.AfterEach;
@@ -22,6 +24,7 @@ import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -266,7 +269,13 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
         );
 
         assertThatThrownBy(() -> keycloakService.createUser(duplicate))
-                .isInstanceOf(IdentityProviderException.class);
+                .isInstanceOf(IdentityProviderException.class)
+                .satisfies(e -> {
+                    IdentityProviderException ex = (IdentityProviderException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.CONFLICT);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.IDENTITY_PROVIDER_ERROR);
+                    assertThat(ex.getLogMessage()).isNotBlank();
+                });
     }
 
     @Test
@@ -420,8 +429,12 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
 
         assertThatThrownBy(() -> keycloakService.updateUser("invalid-uuid", updateDto))
                 .isInstanceOf(IdentityProviderException.class)
-                .extracting(e -> ((IdentityProviderException) e).getStatusCode())
-                .isEqualTo(404);
+                .satisfies(e -> {
+                    IdentityProviderException ex = (IdentityProviderException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.IDENTITY_PROVIDER_ERROR);
+                    assertThat(ex.getLogMessage()).isNotBlank();
+                });
     }
 
     @Test
@@ -453,8 +466,12 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
     void deleteUser_shouldThrowIdentityProviderException_whenInvalidUserId() {
         assertThatThrownBy(() -> keycloakService.deleteUser("invalid-uuid"))
                 .isInstanceOf(IdentityProviderException.class)
-                .extracting(e -> ((IdentityProviderException) e).getStatusCode())
-                .isEqualTo(404);
+                .satisfies(e -> {
+                    IdentityProviderException ex = (IdentityProviderException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.IDENTITY_PROVIDER_ERROR);
+                    assertThat(ex.getLogMessage()).isNotBlank();
+                });
     }
 
     @Test
@@ -495,8 +512,12 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
     void getUserById_shouldThrowIdentityProviderException_whenInvalidUserId() {
         assertThatThrownBy(() -> keycloakService.getUserById("invalid-uuid"))
                 .isInstanceOf(IdentityProviderException.class)
-                .extracting(e -> ((IdentityProviderException) e).getStatusCode())
-                .isEqualTo(404);
+                .satisfies(e -> {
+                    IdentityProviderException ex = (IdentityProviderException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.IDENTITY_PROVIDER_ERROR);
+                    assertThat(ex.getCause()).isInstanceOf(WebApplicationException.class);
+                });
     }
 
     @Test
@@ -558,8 +579,12 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
     void getUserGroups_shouldThrowIdentityProviderException_whenInvalidUserId() {
         assertThatThrownBy(() -> keycloakService.getUserGroups("invalid-uuid"))
                 .isInstanceOf(IdentityProviderException.class)
-                .extracting(e -> ((IdentityProviderException) e).getStatusCode())
-                .isEqualTo(404);
+                .satisfies(e -> {
+                    IdentityProviderException ex = (IdentityProviderException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.IDENTITY_PROVIDER_ERROR);
+                    assertThat(ex.getCause()).isInstanceOf(WebApplicationException.class);
+                });
     }
 
     @Test
@@ -598,8 +623,13 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
         ));
 
         assertThatThrownBy(() -> keycloakService.updatePassword(userId, password))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Password must not be blank");
+                .isInstanceOf(InvalidArgumentException.class)
+                .satisfies(e -> {
+                    InvalidArgumentException ex = (InvalidArgumentException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.INTERNAL_ERROR);
+                    assertThat(ex.getLogMessage()).isEqualTo("Password must not be blank");
+                });
     }
 
     private IdentityUserCreateRequestDTO getCreateRequestDTO(

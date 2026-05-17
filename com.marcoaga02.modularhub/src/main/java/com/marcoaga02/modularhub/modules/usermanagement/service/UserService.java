@@ -3,13 +3,14 @@ package com.marcoaga02.modularhub.modules.usermanagement.service;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
+import com.marcoaga02.modularhub.modules.usermanagement.exception.UserAlreadyExistsException;
+import com.marcoaga02.modularhub.modules.usermanagement.exception.UserNotFoundException;
 import com.marcoaga02.modularhub.modules.usermanagement.mapper.UserMapper;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
 import com.marcoaga02.modularhub.modules.usermanagement.specification.UserSpecification;
 import com.marcoaga02.modularhub.shared.dto.*;
-import com.marcoaga02.modularhub.shared.exception.BadRequestException;
-import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.exception.LanguageNotFoundException;
 import com.marcoaga02.modularhub.shared.repository.LanguageRepository;
 import com.marcoaga02.modularhub.shared.service.AccountPreferencesService;
 import com.marcoaga02.modularhub.shared.service.AccountService;
@@ -60,7 +61,7 @@ public class UserService {
 
     public UserResponseDTO getUserByUuid(String uuid) {
         User user = userRepository.findByUuidAndDeletedOnIsNull(uuid)
-                .orElseThrow(() -> new NotFoundException(String.format("User with uuid '%s' not found", uuid)));
+                .orElseThrow(() -> new UserNotFoundException(uuid));
 
         AuditDTO auditDto = new AuditDTO();
         auditDto.setCreatedOn(user.getCreatedOn());
@@ -89,9 +90,7 @@ public class UserService {
         validateLanguage(dto.getLanguageId());
 
         if (existsActiveUserWithSameTaxIdNumber(dto.getTaxIdNumber())) {
-            throw new BadRequestException(
-                    String.format("User with taxIdNumber '%s' already exists", dto.getTaxIdNumber())
-            );
+            throw new UserAlreadyExistsException(dto.getTaxIdNumber());
         }
 
         User user = new User();
@@ -129,16 +128,14 @@ public class UserService {
     @Transactional
     public UserResponseDTO updateUser(String uuid, UserRequestDTO dto) {
         User user = userRepository.findByUuidAndDeletedOnIsNull(uuid)
-                .orElseThrow(() -> new NotFoundException(String.format("User with uuid '%s' not found", uuid)));
+                .orElseThrow(() -> new UserNotFoundException(uuid));
 
         validateLanguage(dto.getLanguageId());
 
         if (!Objects.equals(user.getTaxIdNumber(), dto.getTaxIdNumber())
                 && existsActiveUserWithSameTaxIdNumber(dto.getTaxIdNumber())
         ) {
-            throw new BadRequestException(
-                    String.format("User with taxIdNumber '%s' already exists", dto.getTaxIdNumber())
-            );
+            throw new UserAlreadyExistsException(dto.getTaxIdNumber());
         }
 
         userMapper.updateEntity(dto, user);
@@ -170,7 +167,7 @@ public class UserService {
     @Transactional
     public void deleteUser(String uuid) {
         User user = userRepository.findByUuidAndDeletedOnIsNull(uuid)
-                .orElseThrow(() -> new NotFoundException(String.format("User with uuid '%s' not found", uuid)));
+                .orElseThrow(() -> new UserNotFoundException(uuid));
 
         identityService.deleteUser(user.getIdentityId());
 
@@ -181,7 +178,7 @@ public class UserService {
 
     public void resetPassword(String uuid) {
         User user = userRepository.findByUuidAndDeletedOnIsNull(uuid)
-                .orElseThrow(() -> new NotFoundException(String.format("User with uuid '%s' not found", uuid)));
+                .orElseThrow(() -> new UserNotFoundException(uuid));
 
         identityService.resetPassword(user.getIdentityId());
     }
@@ -192,7 +189,7 @@ public class UserService {
 
     private void validateLanguage(String langUuid) {
         languageRepository.findByUuid(langUuid)
-                .orElseThrow(() -> new BadRequestException(String.format("Language with uuid '%s' not found", langUuid)));
+                .orElseThrow(() -> new LanguageNotFoundException(langUuid));
     }
 
     private String resolveUserFullName(String identityId) {

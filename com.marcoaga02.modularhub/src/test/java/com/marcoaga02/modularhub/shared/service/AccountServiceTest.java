@@ -1,13 +1,16 @@
 package com.marcoaga02.modularhub.shared.service;
 
+import com.marcoaga02.modularhub.shared.constant.ExceptionCodes;
 import com.marcoaga02.modularhub.shared.constant.SecurityConstants;
 import com.marcoaga02.modularhub.shared.dto.AccountDTO;
+import com.marcoaga02.modularhub.shared.exception.InternalStateException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -84,7 +87,12 @@ class AccountServiceTest {
     void getJwtAuthentication_shouldThrowIllegalStateException_whenNoJwtAuthentication() {
         SecurityContextHolder.clearContext();
         assertThatThrownBy(() -> accountService.getCurrentAccount())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("No JWT authentication found in security context");
+                .isInstanceOf(InternalStateException.class)
+                .satisfies(e -> {
+                    InternalStateException ex = (InternalStateException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.INTERNAL_ERROR);
+                    assertThat(ex.getLogMessage()).isEqualTo("No JWT authentication found in security context");
+                });
     }
 }

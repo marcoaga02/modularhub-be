@@ -4,6 +4,7 @@ import com.marcoaga02.modularhub.shared.constant.KeycloakClaims;
 import com.marcoaga02.modularhub.shared.constant.SecurityConstants;
 import com.marcoaga02.modularhub.shared.dto.AccountDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesResponseDTO;
+import com.marcoaga02.modularhub.shared.exception.InternalStateException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,7 +36,7 @@ public class AccountService {
             return jwtAuth;
         }
 
-        throw new IllegalStateException("No JWT authentication found in security context");
+        throw new InternalStateException("No JWT authentication found in security context");
     }
 
     public AccountDTO getCurrentAccount() {

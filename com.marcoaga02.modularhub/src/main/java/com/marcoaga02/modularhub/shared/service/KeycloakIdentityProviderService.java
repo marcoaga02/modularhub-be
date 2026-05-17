@@ -5,6 +5,7 @@ import com.marcoaga02.modularhub.shared.dto.IdentityUserCreateRequestDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserUpdateRequestDTO;
 import com.marcoaga02.modularhub.shared.exception.IdentityProviderException;
+import com.marcoaga02.modularhub.shared.exception.InvalidArgumentException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.admin.client.CreatedResponseUtil;
@@ -131,7 +132,7 @@ public class KeycloakIdentityProviderService implements IdentityProviderService 
     @Override
     public void updatePassword(String userId, String password) {
         if (!StringUtils.hasText(password)) {
-            throw new IllegalArgumentException("Password must not be blank");
+            throw new InvalidArgumentException("Password must not be blank");
         }
 
         CredentialRepresentation credential =
@@ -183,7 +184,7 @@ public class KeycloakIdentityProviderService implements IdentityProviderService 
         try {
             return action.get();
         } catch (WebApplicationException e) {
-            throw new IdentityProviderException(e.getResponse().getStatus(), e.getMessage());
+            throw new IdentityProviderException(e.getResponse().getStatus(), e.getMessage(), e);
         }
     }
 
@@ -191,7 +192,7 @@ public class KeycloakIdentityProviderService implements IdentityProviderService 
         try {
             action.run();
         } catch (WebApplicationException e) {
-            throw new IdentityProviderException(e.getResponse().getStatus(), e.getMessage());
+            throw new IdentityProviderException(e.getResponse().getStatus(), e.getMessage(), e);
         }
     }
 }

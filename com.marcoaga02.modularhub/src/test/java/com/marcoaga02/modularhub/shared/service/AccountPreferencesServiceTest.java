@@ -1,10 +1,13 @@
 package com.marcoaga02.modularhub.shared.service;
 
+import com.marcoaga02.modularhub.shared.constant.ExceptionCodes;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesCreateDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesUpdateDTO;
 import com.marcoaga02.modularhub.shared.dto.LanguageResponseDTO;
-import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.exception.AccountPreferencesNotFoundException;
+import com.marcoaga02.modularhub.shared.exception.InvalidArgumentException;
+import com.marcoaga02.modularhub.shared.exception.LanguageNotFoundException;
 import com.marcoaga02.modularhub.shared.mapper.AccountPreferencesMapper;
 import com.marcoaga02.modularhub.shared.model.AccountPreferences;
 import com.marcoaga02.modularhub.shared.model.Language;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.util.Optional;
 
@@ -73,8 +77,13 @@ class AccountPreferencesServiceTest {
     @Test
     void getAccountPreferences_shouldThrowIllegalArgumentException_whenIdentityIdIsNull() {
         assertThatThrownBy(() -> service.getAccountPreferences(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("identityId cannot be null");
+                .isInstanceOf(InvalidArgumentException.class)
+                .satisfies(e -> {
+                    InvalidArgumentException ex = (InvalidArgumentException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.INTERNAL_ERROR);
+                    assertThat(ex.getLogMessage()).isEqualTo("identityId cannot be null");
+                });
 
         verify(preferencesRepository, never()).findByIdentityId(anyString());
         verify(mapper, never()).toDto(any(AccountPreferences.class));
@@ -88,8 +97,13 @@ class AccountPreferencesServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getAccountPreferences(identityId))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessage(String.format("AccountPreferences for identityId '%s' not found", identityId));
+                .isInstanceOf(AccountPreferencesNotFoundException.class)
+                .satisfies(e -> {
+                    AccountPreferencesNotFoundException ex = (AccountPreferencesNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.ACCOUNT_PREFERENCES_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("AccountPreferences for identityId 'identity-id' not found");
+                });
 
         verify(preferencesRepository).findByIdentityId(identityId);
         verify(mapper, never()).toDto(any(AccountPreferences.class));
@@ -135,8 +149,13 @@ class AccountPreferencesServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.createAccountPreferences(createDto))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessage(String.format("Language with uuid '%s' not found", languageId));
+                .isInstanceOf(LanguageNotFoundException.class)
+                .satisfies(e -> {
+                    LanguageNotFoundException ex = (LanguageNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.LANGUAGE_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("Language with uuid 'invalid-language-id' not found");
+                });
 
         verify(languageRepository).findByUuid(languageId);
         verify(preferencesRepository, never()).save(any(AccountPreferences.class));
@@ -178,8 +197,13 @@ class AccountPreferencesServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.updateAccountPreferencesByIdentityId(identityId, updateDto))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessage(String.format("AccountPreferences for identityId '%s' not found", identityId));
+                .isInstanceOf(AccountPreferencesNotFoundException.class)
+                .satisfies(e -> {
+                    AccountPreferencesNotFoundException ex = (AccountPreferencesNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.ACCOUNT_PREFERENCES_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("AccountPreferences for identityId 'not-found-id' not found");
+                });
 
         verify(preferencesRepository).findByIdentityId(identityId);
         verify(languageRepository, never()).findByUuid(anyString());
@@ -202,8 +226,13 @@ class AccountPreferencesServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.updateAccountPreferencesByIdentityId(identityId, updateDto))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessage(String.format("Language with uuid '%s' not found", languageId));
+                .isInstanceOf(LanguageNotFoundException.class)
+                .satisfies(e -> {
+                    LanguageNotFoundException ex = (LanguageNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.LANGUAGE_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("Language with uuid 'invalid-language-id' not found");
+                });
 
         verify(preferencesRepository).findByIdentityId(identityId);
         verify(languageRepository).findByUuid(languageId);

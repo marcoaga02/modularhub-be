@@ -1,13 +1,15 @@
 package com.marcoaga02.modularhub.shared.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class BadRequestException extends RuntimeException {
+public abstract class BadRequestException extends ApplicationException {
 
-    public BadRequestException(String message) {
-        super(message);
+    protected BadRequestException(String errorCode, String logMessage) {
+        super(errorCode, HttpStatus.BAD_REQUEST, logMessage);
+    }
+
+    protected BadRequestException(String errorCode, String logMessage, Throwable cause) {
+        super(errorCode, HttpStatus.BAD_REQUEST, logMessage, cause);
     }
 }
 

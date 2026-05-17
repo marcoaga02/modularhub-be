@@ -2,16 +2,19 @@ package com.marcoaga02.modularhub.modules.usermanagement.service;
 
 import com.marcoaga02.modularhub.ModularhubApplication;
 import com.marcoaga02.modularhub.config.BaseITWithMockIdentity;
+import com.marcoaga02.modularhub.modules.usermanagement.constant.UserManagementExceptionCodes;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
+import com.marcoaga02.modularhub.modules.usermanagement.exception.UserAlreadyExistsException;
+import com.marcoaga02.modularhub.modules.usermanagement.exception.UserNotFoundException;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Gender;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
+import com.marcoaga02.modularhub.shared.constant.ExceptionCodes;
 import com.marcoaga02.modularhub.shared.dto.AccountDTO;
 import com.marcoaga02.modularhub.shared.dto.AccountPreferencesResponseDTO;
 import com.marcoaga02.modularhub.shared.dto.IdentityUserResponseDTO;
-import com.marcoaga02.modularhub.shared.exception.BadRequestException;
-import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.exception.LanguageNotFoundException;
 import com.marcoaga02.modularhub.shared.model.AccountPreferences;
 import com.marcoaga02.modularhub.shared.model.Language;
 import com.marcoaga02.modularhub.shared.repository.AccountPreferencesRepository;
@@ -27,6 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -245,8 +249,13 @@ class UserServiceIT extends BaseITWithMockIdentity {
     @Test
     void getUserByUuid_shouldThrowNotFoundException_whenUserNotFound() {
         assertThatThrownBy(() -> userService.getUserByUuid("non-existing-uuid"))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
+                .isInstanceOf(UserNotFoundException.class)
+                .satisfies(e -> {
+                    UserNotFoundException ex = (UserNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with uuid 'non-existing-uuid' not found");
+                });
     }
 
     @Test
@@ -284,8 +293,13 @@ class UserServiceIT extends BaseITWithMockIdentity {
         dto.setEnabled(true);
 
         assertThatThrownBy(() -> userService.createUser(dto))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Language with uuid 'NON-EXIST-LANG' not found");
+                .isInstanceOf(LanguageNotFoundException.class)
+                .satisfies(e -> {
+                    LanguageNotFoundException ex = (LanguageNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.LANGUAGE_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("Language with uuid 'NON-EXIST-LANG' not found");
+                });
     }
 
     @Test
@@ -322,8 +336,13 @@ class UserServiceIT extends BaseITWithMockIdentity {
         UserRequestDTO dto = buildUserRequestDTO(lang1.getUuid(), "TAX_ID_NEW");
 
         assertThatThrownBy(() -> userService.updateUser("non-existing-uuid", dto))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
+                .isInstanceOf(UserNotFoundException.class)
+                .satisfies(e -> {
+                    UserNotFoundException ex = (UserNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with uuid 'non-existing-uuid' not found");
+                });
     }
 
     @Test
@@ -331,8 +350,13 @@ class UserServiceIT extends BaseITWithMockIdentity {
         UserRequestDTO dto = buildUserRequestDTO("NON-EXIST-LANG", enabledUser.getTaxIdNumber());
 
         assertThatThrownBy(() -> userService.updateUser(enabledUser.getUuid(), dto))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Language with uuid 'NON-EXIST-LANG' not found");
+                .isInstanceOf(LanguageNotFoundException.class)
+                .satisfies(e -> {
+                    LanguageNotFoundException ex = (LanguageNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.LANGUAGE_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("Language with uuid 'NON-EXIST-LANG' not found");
+                });
     }
 
     @Test
@@ -340,8 +364,13 @@ class UserServiceIT extends BaseITWithMockIdentity {
         UserRequestDTO dto = buildUserRequestDTO(lang1.getUuid(), anotherUser.getTaxIdNumber());
 
         assertThatThrownBy(() -> userService.updateUser(enabledUser.getUuid(), dto))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining(String.format("User with taxIdNumber '%s' already exists", anotherUser.getTaxIdNumber()));
+                .isInstanceOf(UserAlreadyExistsException.class)
+                .satisfies(e -> {
+                    UserAlreadyExistsException ex = (UserAlreadyExistsException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_ALREADY_EXISTS);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with taxIdNumber 'USR_3' already exists");
+                });
     }
 
     @Test
@@ -364,15 +393,25 @@ class UserServiceIT extends BaseITWithMockIdentity {
     @Test
     void deleteUser_shouldThrowNotFoundException_whenUserNotFound() {
         assertThatThrownBy(() -> userService.deleteUser("non-existing-uuid"))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
+                .isInstanceOf(UserNotFoundException.class)
+                .satisfies(e -> {
+                    UserNotFoundException ex = (UserNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with uuid 'non-existing-uuid' not found");
+                });
     }
 
     @Test
     void resetPassword_shouldThrowNotFoundException_whenUserNotFound() {
         assertThatThrownBy(() -> userService.resetPassword("non-existing-uuid"))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
+                .isInstanceOf(UserNotFoundException.class)
+                .satisfies(e -> {
+                    UserNotFoundException ex = (UserNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with uuid 'non-existing-uuid' not found");
+                });
     }
 
     private User createAndSaveUser(

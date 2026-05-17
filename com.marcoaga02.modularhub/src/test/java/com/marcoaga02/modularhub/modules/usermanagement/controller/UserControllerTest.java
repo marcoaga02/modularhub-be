@@ -2,10 +2,10 @@ package com.marcoaga02.modularhub.modules.usermanagement.controller;
 
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
+import com.marcoaga02.modularhub.modules.usermanagement.exception.UserNotFoundException;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Gender;
 import com.marcoaga02.modularhub.modules.usermanagement.service.UserService;
 import com.marcoaga02.modularhub.shared.constant.PaginationHeaders;
-import com.marcoaga02.modularhub.shared.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,8 +81,9 @@ class UserControllerTest {
 
     @Test
     void getUserByUuid_shouldReturn404_whenUserNotFound() throws Exception {
-        when(userService.getUserByUuid("not-existing"))
-                .thenThrow(new NotFoundException("User with uuid 'not-existing' not found"));
+        final String uuid = "not-existing";
+        when(userService.getUserByUuid(uuid))
+                .thenThrow(new UserNotFoundException(uuid));
 
         mockMvc.perform(get("/users/not-existing"))
                 .andExpect(status().isNotFound());
@@ -124,10 +125,11 @@ class UserControllerTest {
 
     @Test
     void updateUser_shouldReturn404_whenUserNotFound() throws Exception {
+        final String uuid = "not-existing";
         UserRequestDTO request = buildUpdateRequestDTO();
 
-        when(userService.updateUser(eq("not-existing"), any()))
-                .thenThrow(new NotFoundException("User with uuid 'not-existing' not found"));
+        when(userService.updateUser(eq(uuid), any()))
+                .thenThrow(new UserNotFoundException(uuid));
 
         mockMvc.perform(put("/users/not-existing")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -153,10 +155,11 @@ class UserControllerTest {
 
     @Test
     void deleteUser_shouldReturn404_whenUserNotFound() throws Exception {
-        doThrow(new NotFoundException("User with uuid 'not-existing' not found"))
-                .when(userService).deleteUser("not-existing");
+        final String uuid = "not-existing";
+        doThrow(new UserNotFoundException(uuid))
+                .when(userService).deleteUser(uuid);
 
-        mockMvc.perform(delete("/users/not-existing"))
+        mockMvc.perform(delete("/users/" + uuid))
                 .andExpect(status().isNotFound());
     }
 
@@ -170,10 +173,11 @@ class UserControllerTest {
 
     @Test
     void resetPassword_shouldReturn404_whenUserNotFound() throws Exception {
-        doThrow(new NotFoundException("User with uuid 'not-existing' not found"))
-                .when(userService).resetPassword("not-existing");
+        final String uuid = "not-existing";
+        doThrow(new UserNotFoundException(uuid))
+                .when(userService).resetPassword(uuid);
 
-        mockMvc.perform(post("/users/not-existing/reset-password"))
+        mockMvc.perform(post("/users/" + uuid + "/reset-password"))
                 .andExpect(status().isNotFound());
     }
 

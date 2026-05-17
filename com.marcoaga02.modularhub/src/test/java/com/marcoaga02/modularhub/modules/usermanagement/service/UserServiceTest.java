@@ -1,15 +1,18 @@
 package com.marcoaga02.modularhub.modules.usermanagement.service;
 
+import com.marcoaga02.modularhub.modules.usermanagement.constant.UserManagementExceptionCodes;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserCriteriaDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserRequestDTO;
 import com.marcoaga02.modularhub.modules.usermanagement.dto.UserResponseDTO;
+import com.marcoaga02.modularhub.modules.usermanagement.exception.UserAlreadyExistsException;
+import com.marcoaga02.modularhub.modules.usermanagement.exception.UserNotFoundException;
 import com.marcoaga02.modularhub.modules.usermanagement.mapper.UserMapper;
 import com.marcoaga02.modularhub.modules.usermanagement.model.Gender;
 import com.marcoaga02.modularhub.modules.usermanagement.model.User;
 import com.marcoaga02.modularhub.modules.usermanagement.repository.UserRepository;
+import com.marcoaga02.modularhub.shared.constant.ExceptionCodes;
 import com.marcoaga02.modularhub.shared.dto.*;
-import com.marcoaga02.modularhub.shared.exception.BadRequestException;
-import com.marcoaga02.modularhub.shared.exception.NotFoundException;
+import com.marcoaga02.modularhub.shared.exception.LanguageNotFoundException;
 import com.marcoaga02.modularhub.shared.model.Language;
 import com.marcoaga02.modularhub.shared.repository.LanguageRepository;
 import com.marcoaga02.modularhub.shared.service.AccountPreferencesService;
@@ -28,6 +31,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -316,14 +320,20 @@ class UserServiceTest {
 
     @Test
     void getUserByUuid_shouldThrowNotFoundException_whenUserNotFound() {
-        when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
+        final String uuid = "not-existing";
+        when(userRepository.findByUuidAndDeletedOnIsNull(uuid))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.getUserByUuid("not-existing"))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User with uuid 'not-existing' not found");
+        assertThatThrownBy(() -> userService.getUserByUuid(uuid))
+                .isInstanceOf(UserNotFoundException.class)
+                .satisfies(e -> {
+                    UserNotFoundException ex = (UserNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with uuid 'not-existing' not found");
+                });
 
-        verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(userRepository).findByUuidAndDeletedOnIsNull(uuid);
         verify(userRepository, never()).findByIdentityId(anyString());
         verify(userMapper, never()).toDto(any());
     }
@@ -405,8 +415,13 @@ class UserServiceTest {
                 .thenReturn(Optional.of(user1));
 
         assertThatThrownBy(() -> userService.createUser(dto))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("User with taxIdNumber 'TAX_ID_01' already exists");
+                .isInstanceOf(UserAlreadyExistsException.class)
+                .satisfies(e -> {
+                    UserAlreadyExistsException ex = (UserAlreadyExistsException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_ALREADY_EXISTS);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with taxIdNumber 'TAX_ID_01' already exists");
+                });
 
         verify(languageRepository).findByUuid("LANG_ID_01");
         verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_01");
@@ -418,18 +433,25 @@ class UserServiceTest {
 
     @Test
     void createUser_shouldThrowBadRequestException_whenInvalidLanguageId() {
+        final String languageId = "INVALID-LANG";
+
         UserRequestDTO dto = new UserRequestDTO();
         dto.setTaxIdNumber("TAX_ID_01");
-        dto.setLanguageId("INVALID_LANG");
+        dto.setLanguageId(languageId);
 
-        when(languageRepository.findByUuid("INVALID_LANG"))
+        when(languageRepository.findByUuid(languageId))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.createUser(dto))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Language with uuid 'INVALID_LANG' not found");
+                .isInstanceOf(LanguageNotFoundException.class)
+                .satisfies(e -> {
+                    LanguageNotFoundException ex = (LanguageNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.LANGUAGE_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("Language with uuid 'INVALID-LANG' not found");
+                });
 
-        verify(languageRepository).findByUuid("INVALID_LANG");
+        verify(languageRepository).findByUuid(languageId);
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(identityService, never()).createUser(any(IdentityUserCreateRequestDTO.class));
         verify(accountPreferencesService, never()).createAccountPreferences(any(AccountPreferencesCreateDTO.class));
@@ -501,14 +523,20 @@ class UserServiceTest {
     void updateUser_shouldThrowNotFoundException_whenUserNotFound() {
         UserRequestDTO dto = buildUserRequestDTO();
 
-        when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
+        final String uuid = "not-existing";
+        when(userRepository.findByUuidAndDeletedOnIsNull(uuid))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.updateUser("not-existing", dto))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User with uuid 'not-existing' not found");
+        assertThatThrownBy(() -> userService.updateUser(uuid, dto))
+                .isInstanceOf(UserNotFoundException.class)
+                .satisfies(e -> {
+                    UserNotFoundException ex = (UserNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with uuid 'not-existing' not found");
+                });
 
-        verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(userRepository).findByUuidAndDeletedOnIsNull(uuid);
         verify(languageRepository, never()).findByUuid(any());
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper, never()).updateEntity(any(), any());
@@ -520,19 +548,24 @@ class UserServiceTest {
     @Test
     void updateUser_shouldThrowBadRequestException_whenInvalidLanguage() {
         UserRequestDTO dto = buildUserRequestDTO();
-        dto.setLanguageId("INVALID_LANG");
+        dto.setLanguageId("INVALID-LANG");
 
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
-        when(languageRepository.findByUuid("INVALID_LANG"))
+        when(languageRepository.findByUuid("INVALID-LANG"))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.updateUser(user1.getUuid(), dto))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Language with uuid 'INVALID_LANG' not found");
+                .isInstanceOf(LanguageNotFoundException.class)
+                .satisfies(e -> {
+                    LanguageNotFoundException ex = (LanguageNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(ExceptionCodes.LANGUAGE_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("Language with uuid 'INVALID-LANG' not found");
+                });
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
-        verify(languageRepository).findByUuid("INVALID_LANG");
+        verify(languageRepository).findByUuid("INVALID-LANG");
         verify(userRepository, never()).findByTaxIdNumberAndDeletedOnIsNull(any());
         verify(userMapper, never()).updateEntity(any(), any());
         verify(identityService, never()).updateUser(any(), any());
@@ -542,23 +575,30 @@ class UserServiceTest {
 
     @Test
     void updateUser_shouldThrowBadRequestException_whenTaxIdNumberAlreadyExists() {
+        final String taxId02 = "TAX_ID_02";
+
         UserRequestDTO dto = buildUserRequestDTO();
-        dto.setTaxIdNumber("TAX_ID_02");
+        dto.setTaxIdNumber(taxId02);
 
         when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
                 .thenReturn(Optional.of(user1));
         when(languageRepository.findByUuid("LANG_ID_01"))
                 .thenReturn(Optional.of(language));
-        when(userRepository.findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_02"))
+        when(userRepository.findByTaxIdNumberAndDeletedOnIsNull(taxId02))
                 .thenReturn(Optional.of(user2));
 
         assertThatThrownBy(() -> userService.updateUser(user1.getUuid(), dto))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("User with taxIdNumber 'TAX_ID_02' already exists");
+                .isInstanceOf(UserAlreadyExistsException.class)
+                .satisfies(e -> {
+                    UserAlreadyExistsException ex = (UserAlreadyExistsException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_ALREADY_EXISTS);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with taxIdNumber 'TAX_ID_02' already exists");
+                });
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
         verify(languageRepository).findByUuid("LANG_ID_01");
-        verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull("TAX_ID_02");
+        verify(userRepository).findByTaxIdNumberAndDeletedOnIsNull(taxId02);
         verify(userMapper, never()).updateEntity(any(), any());
         verify(identityService, never()).updateUser(any(), any());
         verify(accountPreferencesService, never()).updateAccountPreferencesByIdentityId(anyString(), any(AccountPreferencesUpdateDTO.class));
@@ -659,14 +699,20 @@ class UserServiceTest {
 
     @Test
     void deleteUser_shouldThrowNotFoundException_whenUserNotFound() {
-        when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
+        final String uuid = "non-existing";
+        when(userRepository.findByUuidAndDeletedOnIsNull(uuid))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.deleteUser("not-existing"))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User with uuid 'not-existing' not found");
+        assertThatThrownBy(() -> userService.deleteUser(uuid))
+                .isInstanceOf(UserNotFoundException.class)
+                .satisfies(e -> {
+                    UserNotFoundException ex = (UserNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with uuid 'non-existing' not found");
+                });
 
-        verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(userRepository).findByUuidAndDeletedOnIsNull(uuid);
         verify(identityService, never()).updateUser(any(), any());
         verify(accountService, never()).getCurrentAccount();
         verify(userRepository, never()).save(any());
@@ -685,14 +731,20 @@ class UserServiceTest {
 
     @Test
     void resetPassword_shouldThrowNotFoundException_whenUserNotFound() {
-        when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
+        final String uuid = "not-existing";
+        when(userRepository.findByUuidAndDeletedOnIsNull(uuid))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.resetPassword("not-existing"))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User with uuid 'not-existing' not found");
+        assertThatThrownBy(() -> userService.resetPassword(uuid))
+                .isInstanceOf(UserNotFoundException.class)
+                .satisfies(e -> {
+                    UserNotFoundException ex = (UserNotFoundException) e;
+                    assertThat(ex.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ex.getErrorCode()).isEqualTo(UserManagementExceptionCodes.USER_NOT_FOUND);
+                    assertThat(ex.getLogMessage()).isEqualTo("User with uuid 'not-existing' not found");
+                });
 
-        verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(userRepository).findByUuidAndDeletedOnIsNull(uuid);
         verify(identityService, never()).resetPassword(any());
     }
 

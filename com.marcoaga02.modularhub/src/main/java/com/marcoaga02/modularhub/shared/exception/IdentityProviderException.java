@@ -1,14 +1,15 @@
 package com.marcoaga02.modularhub.shared.exception;
 
-import lombok.Getter;
+import com.marcoaga02.modularhub.shared.constant.ExceptionCodes;
+import org.springframework.http.HttpStatus;
 
-@Getter
-public class IdentityProviderException extends RuntimeException {
-    private final int statusCode;
+public class IdentityProviderException extends ApplicationException {
 
-    public IdentityProviderException(int statusCode, String message) {
-        super(message);
-        this.statusCode = statusCode;
+    public IdentityProviderException(int statusCode, String logMessage) {
+        super(ExceptionCodes.IDENTITY_PROVIDER_ERROR, HttpStatus.valueOf(statusCode), logMessage);
     }
 
+    public IdentityProviderException(int statusCode, String logMessage, Throwable cause) {
+        super(ExceptionCodes.IDENTITY_PROVIDER_ERROR, HttpStatus.valueOf(statusCode), logMessage, cause);
+    }
 }
