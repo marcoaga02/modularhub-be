@@ -160,6 +160,23 @@ class UserControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void resetPassword_shouldReturnNoContent_whenValidRequest() throws Exception {
+        mockMvc.perform(post("/users/user-uuid/reset-password"))
+                .andExpect(status().isNoContent());
+
+        verify(userService).resetPassword("user-uuid");
+    }
+
+    @Test
+    void resetPassword_shouldReturn404_whenUserNotFound() throws Exception {
+        doThrow(new NotFoundException("User with uuid 'not-existing' not found"))
+                .when(userService).resetPassword("not-existing");
+
+        mockMvc.perform(post("/users/not-existing/reset-password"))
+                .andExpect(status().isNotFound());
+    }
+
     private UserRequestDTO buildUpdateRequestDTO() {
         UserRequestDTO request = new UserRequestDTO();
         request.setFirstname("new firstname");

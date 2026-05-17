@@ -58,6 +58,8 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
         registry.add("keycloak.realm", () -> REALM);
         registry.add("keycloak.admin-username", () -> "admin");
         registry.add("keycloak.admin-password", () -> "admin");
+        registry.add("keycloak.frontend-client-id", () -> "test-frontend-client");
+        registry.add("keycloak.app-url", () -> "http://localhost:4200");
     }
 
     @Autowired
@@ -561,7 +563,7 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
     }
 
     @Test
-    void resetPassword_shouldNotThrow_whenValidRequest() {
+    void updatePassword_shouldNotThrow_whenValidRequest() {
         IdentityUserCreateRequestDTO dto = getCreateRequestDTO(
                 "mario.rossi",
                 "mario.rossi@example.com",
@@ -577,13 +579,13 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
         assertNotNull(userId);
 
         assertThatNoException()
-                .isThrownBy(() -> keycloakService.resetPassword(userId, "newPassword123"));
+                .isThrownBy(() -> keycloakService.updatePassword(userId, "newPassword123"));
     }
 
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {" ", "\t", "\t "})
-    void resetPassword_shouldThrowIllegalArgumentException_whenPasswordIsBlank(String password) {
+    void updatePassword_shouldThrowIllegalArgumentException_whenPasswordIsBlank(String password) {
         String userId = keycloakService.createUser(getCreateRequestDTO(
                 "mario.rossi",
                 "mario.rossi@example.com",
@@ -595,7 +597,7 @@ class KeycloakIdentityProviderServiceIT extends BaseIT {
                 List.of(firstGroupId, secondGroupId)
         ));
 
-        assertThatThrownBy(() -> keycloakService.resetPassword(userId, password))
+        assertThatThrownBy(() -> keycloakService.updatePassword(userId, password))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Password must not be blank");
     }

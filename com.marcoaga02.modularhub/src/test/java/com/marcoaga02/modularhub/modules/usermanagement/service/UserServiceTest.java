@@ -652,6 +652,7 @@ class UserServiceTest {
         assertThat(user1.getDeletedOn()).isNotNull();
 
         verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
+        verify(identityService).deleteUser(user1.getIdentityId());
         verify(accountService).getCurrentAccount();
         verify(userRepository).save(user1);
     }
@@ -666,8 +667,33 @@ class UserServiceTest {
                 .hasMessageContaining("User with uuid 'not-existing' not found");
 
         verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(identityService, never()).updateUser(any(), any());
         verify(accountService, never()).getCurrentAccount();
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void resetPassword_shouldResetPassword_whenValid() {
+        when(userRepository.findByUuidAndDeletedOnIsNull(user1.getUuid()))
+                .thenReturn(Optional.of(user1));
+
+        userService.resetPassword(user1.getUuid());
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull(user1.getUuid());
+        verify(identityService).resetPassword(user1.getIdentityId());
+    }
+
+    @Test
+    void resetPassword_shouldThrowNotFoundException_whenUserNotFound() {
+        when(userRepository.findByUuidAndDeletedOnIsNull("not-existing"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.resetPassword("not-existing"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("User with uuid 'not-existing' not found");
+
+        verify(userRepository).findByUuidAndDeletedOnIsNull("not-existing");
+        verify(identityService, never()).resetPassword(any());
     }
 
     private UserRequestDTO buildUserRequestDTO() {

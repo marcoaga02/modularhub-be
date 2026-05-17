@@ -21,5 +21,7 @@ public interface IdentityProviderService {
 
     List<IdentityGroupDTO> getUserGroups(String userId);
 
-    void resetPassword(String userId, String password);
+    void updatePassword(String userId, String password);
+
+    void resetPassword(String userId);
 }

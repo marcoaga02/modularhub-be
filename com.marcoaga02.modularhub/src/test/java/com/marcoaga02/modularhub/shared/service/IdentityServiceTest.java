@@ -45,7 +45,7 @@ class IdentityServiceTest {
 
         assertThat(userId).isEqualTo("user-id");
         verify(identityProvider).createUser(user);
-        verify(identityProvider).resetPassword("user-id", "Password123!");
+        verify(identityProvider).updatePassword("user-id", "Password123!");
     }
 
     @Test
@@ -68,7 +68,7 @@ class IdentityServiceTest {
 
         assertThat(userId).isEqualTo("user-id");
         verify(identityProvider).createUser(user);
-        verify(identityProvider, never()).resetPassword(any(), anyString());
+        verify(identityProvider, never()).updatePassword(any(), anyString());
     }
 
     @Test
@@ -91,7 +91,7 @@ class IdentityServiceTest {
 
         assertThat(userId).isEqualTo("user-id");
         verify(identityProvider).createUser(user);
-        verify(identityProvider, never()).resetPassword(any(), anyString());
+        verify(identityProvider, never()).updatePassword(any(), anyString());
     }
 
     @Test
@@ -136,35 +136,6 @@ class IdentityServiceTest {
         verify(identityProvider).getUserById(identityId);
     }
 
-    @Test
-    void testUpdateUserPassword_shouldUpdateUserPassword_whenPasswordIsNotBlank() {
-        final String userId = "user-id";
-        final String password = "Password123!";
-
-        identityService.updateUserPassword(userId, password);
-
-        verify(identityProvider).resetPassword(userId, password);
-    }
-
-    @Test
-    void updateUserPassword_shouldUpdateUserPassword_whenPasswordIsBlank() {
-        final String userId = "user-id";
-        final String password = "";
-
-        identityService.updateUserPassword(userId, password);
-
-        verify(identityProvider, never()).resetPassword(any(), anyString());
-    }
-
-    @Test
-    void updateUserPassword_shouldUpdateUserPassword_whenPasswordIsNull() {
-        final String userId = "user-id";
-        final String password = null;
-
-        identityService.updateUserPassword(userId, password);
-
-        verify(identityProvider, never()).resetPassword(any(), anyString());
-    }
 
     @Test
     void deleteUser_shouldDeleteUser() {
@@ -173,6 +144,15 @@ class IdentityServiceTest {
         identityService.deleteUser(userId);
 
         verify(identityProvider).deleteUser(userId);
+    }
+
+    @Test
+    void resetPassword_shouldResetPassword() {
+        final String userId = "user-id";
+
+        identityService.resetPassword(userId);
+
+        verify(identityProvider).resetPassword(userId);
     }
 
     @Test

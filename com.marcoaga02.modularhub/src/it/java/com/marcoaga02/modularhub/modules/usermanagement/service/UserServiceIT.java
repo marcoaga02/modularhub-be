@@ -368,6 +368,13 @@ class UserServiceIT extends BaseITWithMockIdentity {
                 .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
     }
 
+    @Test
+    void resetPassword_shouldThrowNotFoundException_whenUserNotFound() {
+        assertThatThrownBy(() -> userService.resetPassword("non-existing-uuid"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("User with uuid 'non-existing-uuid' not found");
+    }
+
     private User createAndSaveUser(
             String identityId,
             String firstname,

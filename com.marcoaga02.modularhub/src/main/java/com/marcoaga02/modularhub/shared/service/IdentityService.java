@@ -22,7 +22,7 @@ public class IdentityService {
         String userId = identityProvider.createUser(user);
 
         if (StringUtils.hasText(user.getPassword())) {
-            identityProvider.resetPassword(userId, user.getPassword());
+            identityProvider.updatePassword(userId, user.getPassword());
         }
 
         return userId;
@@ -36,10 +36,8 @@ public class IdentityService {
         return identityProvider.getUserById(id);
     }
 
-    public void updateUserPassword(String userId, String password) {
-        if (StringUtils.hasText(password)) {
-            identityProvider.resetPassword(userId, password);
-        }
+    public void resetPassword(String userId) {
+        identityProvider.resetPassword(userId);
     }
 
     public void deleteUser(String userId) {

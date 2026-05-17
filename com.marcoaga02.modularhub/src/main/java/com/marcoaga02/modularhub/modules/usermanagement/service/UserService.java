@@ -179,6 +179,13 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void resetPassword(String uuid) {
+        User user = userRepository.findByUuidAndDeletedOnIsNull(uuid)
+                .orElseThrow(() -> new NotFoundException(String.format("User with uuid '%s' not found", uuid)));
+
+        identityService.resetPassword(user.getIdentityId());
+    }
+
     private boolean existsActiveUserWithSameTaxIdNumber(String taxIdNumber) {
         return userRepository.findByTaxIdNumberAndDeletedOnIsNull(taxIdNumber).isPresent();
     }
@@ -197,5 +204,4 @@ public class UserService {
                 .map(User::getFullName)
                 .orElse("");
     }
-
 }

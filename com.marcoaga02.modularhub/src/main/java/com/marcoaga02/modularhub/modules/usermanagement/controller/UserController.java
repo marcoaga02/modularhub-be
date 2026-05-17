@@ -64,4 +64,11 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{uuid}/reset-password")
+    public ResponseEntity<Void> resetPassword(@PathVariable String uuid) {
+        userService.resetPassword(uuid);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }

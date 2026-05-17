@@ -30,12 +30,18 @@ public class KeycloakIdentityProviderService implements IdentityProviderService 
 
     private final Keycloak adminClient;
     private final String realm;
+    private final String frontendClientId;
+    private final String appUrl;
 
     public KeycloakIdentityProviderService(
             Keycloak adminClient,
-            @Value("${keycloak.realm}") String realm) {
+            @Value("${keycloak.realm}") String realm,
+            @Value("${keycloak.frontend-client-id}") String frontendClientId,
+            @Value("${keycloak.app-url}") String appUrl){
         this.adminClient = adminClient;
         this.realm = realm;
+        this.frontendClientId = frontendClientId;
+        this.appUrl = appUrl;
     }
 
     private RealmResource realm() {
@@ -123,7 +129,7 @@ public class KeycloakIdentityProviderService implements IdentityProviderService 
     }
 
     @Override
-    public void resetPassword(String userId, String password) {
+    public void updatePassword(String userId, String password) {
         if (!StringUtils.hasText(password)) {
             throw new IllegalArgumentException("Password must not be blank");
         }
@@ -135,6 +141,16 @@ public class KeycloakIdentityProviderService implements IdentityProviderService 
         credential.setValue(password);
 
         execute(() -> realm().users().get(userId).resetPassword(credential));
+    }
+
+    @Override
+    public void resetPassword(String userId) {
+        execute(() -> realm().users().get(userId)
+                .executeActionsEmail(
+                        frontendClientId,
+                        appUrl,
+                        List.of("UPDATE_PASSWORD")
+                ));
     }
 
     private void updateUserGroups(String userId, Set<String> groupIds) {
